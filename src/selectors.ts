@@ -34,19 +34,19 @@ export function buildBaseLists({
 
     const defaultProxies = buildList(
         PROXY_GROUPS.SELECT,
-        landing && PROXY_GROUPS.LANDING,
-        suffixedCountryNames,
-        lowCost && PROXY_GROUPS.LOW_COST,
-        PROXY_GROUPS.MANUAL,
-        "DIRECT"
-    );
-
-    const defaultProxiesDirect = buildList(
         "DIRECT",
         landing && PROXY_GROUPS.LANDING,
         suffixedCountryNames,
         lowCost && PROXY_GROUPS.LOW_COST,
+        PROXY_GROUPS.MANUAL
+    );
+
+    const defaultProxiesDirect = buildList(
+        "DIRECT",
         PROXY_GROUPS.SELECT,
+        landing && PROXY_GROUPS.LANDING,
+        suffixedCountryNames,
+        lowCost && PROXY_GROUPS.LOW_COST,
         PROXY_GROUPS.MANUAL
     );
 

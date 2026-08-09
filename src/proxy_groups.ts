@@ -146,7 +146,10 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.ASIA_STREAMING,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/DomesticMedia.png`,
             type: "select",
-            proxies: hasTW && hasHK ? ["DIRECT", `台湾节点`, `香港节点`] : defaultProxiesDirect,
+            proxies:
+                hasTW && hasHK
+                    ? ["DIRECT", PROXY_GROUPS.SELECT, `台湾节点`, `香港节点`]
+                    : defaultProxiesDirect,
         },
         {
             name: PROXY_GROUPS.BILIBILI,
@@ -171,7 +174,7 @@ export function buildProxyGroups({
             icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/Instagram.png`,
             type: "select",
             proxies: hasUS
-                ? ["DIRECT", `美国节点`, PROXY_GROUPS.SELECT, PROXY_GROUPS.MANUAL]
+                ? ["DIRECT", PROXY_GROUPS.SELECT, `美国节点`, PROXY_GROUPS.MANUAL]
                 : defaultProxiesDirect,
         },
         {
