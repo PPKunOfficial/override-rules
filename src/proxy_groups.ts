@@ -81,6 +81,7 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.SELECT,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Proxy.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultSelector,
         },
         {
@@ -109,6 +110,7 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.STATIC_RESOURCES,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Cloudflare.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
@@ -122,30 +124,35 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.APPLE,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Apple_2.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.GOOGLE,
             icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/Google.png`,
             type: "select",
+            "include-all": true,
             proxies: [PROXY_GROUPS.AI_SERVICE, ...defaultProxies],
         },
         {
             name: PROXY_GROUPS.MICROSOFT,
             icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/Microsoft_Copilot.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.GITHUB,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/GitHub.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.ASIA_STREAMING,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/DomesticMedia.png`,
             type: "select",
+            "include-all": true,
             proxies:
                 hasTW && hasHK
                     ? ["DIRECT", PROXY_GROUPS.SELECT, `台湾节点`, `香港节点`]
@@ -155,24 +162,28 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.BILIBILI,
             icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/bilibili.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxiesDirect,
         },
         {
             name: PROXY_GROUPS.WESTERN_STREAMING,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/ForeignMedia.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.PC_GAMES,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Game.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.SOCIAL_MEDIA,
             icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/Instagram.png`,
             type: "select",
+            "include-all": true,
             proxies: hasUS
                 ? ["DIRECT", PROXY_GROUPS.SELECT, `美国节点`, PROXY_GROUPS.MANUAL]
                 : defaultProxiesDirect,
@@ -181,12 +192,14 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.R18,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Bookpedia.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.PIKPAK,
             icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/PikPak.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
@@ -206,6 +219,7 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.SSH,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Server.png`,
             type: "select",
+            "include-all": true,
             proxies: defaultProxies,
         },
         {
@@ -218,6 +232,7 @@ export function buildProxyGroups({
             name: PROXY_GROUPS.FINAL,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/Final.png`,
             type: "select",
+            "include-all": true,
             proxies: [PROXY_GROUPS.SELECT, "DIRECT"],
         },
         {
