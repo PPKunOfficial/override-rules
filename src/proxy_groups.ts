@@ -149,6 +149,12 @@ export function buildProxyGroups({
             proxies: hasTW && hasHK ? ["DIRECT", `台湾节点`, `香港节点`] : defaultProxiesDirect,
         },
         {
+            name: PROXY_GROUPS.BILIBILI,
+            icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/bilibili.png`,
+            type: "select",
+            proxies: defaultProxiesDirect,
+        },
+        {
             name: PROXY_GROUPS.WESTERN_STREAMING,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/ForeignMedia.png`,
             type: "select",

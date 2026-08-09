@@ -23,6 +23,7 @@ export const PROXY_GROUPS = {
     GOOGLE: "谷歌服务",
     MICROSOFT: "微软服务",
     ASIA_STREAMING: "亚洲流媒体",
+    BILIBILI: "哔哩哔哩",
     WESTERN_STREAMING: "欧美流媒体",
     SOCIAL_MEDIA: "社交媒体",
     PC_GAMES: "PC游戏",

@@ -85,6 +85,10 @@ https://raw.githubusercontent.com/PPKunOfficial/override-rules/refs/heads/previe
 
 **国内服务**：收纳微博等国内服务及国内 IP 流量，默认直连，也支持直接勾选任意节点。
 
+**亚洲流媒体**：收纳除哔哩哔哩外的亚洲流媒体平台（巴哈姆特、Abema、Niconico、DMM、Disney+、Prime Video、Kakao、Viu、Hotstar、TVB、MyTV Super、TikTok），默认直连或港澳台节点。
+
+**哔哩哔哩**：独立分组，默认直连，也支持手动选择任意节点。
+
 **搜狗输入**：默认放行，作用是避免搜狗输入法将你输入的每一个字符自动收集并通过`get.sogou.com/q`等域名回传。隐私担忧者可以将其设置为`REJECT`，开启后会影响搜狗输入法账号同步、词库更新、问题反馈，但语音输入等其他功能可以正常使用。
 
 ~~**Play 商店修复**：~~ 修复国行设备因使用`services.googleapis.cn`域名导致的 Google Play 下载应用时的「等待中…」问题。详见：[「Google Play 商店的国内 CDN：从密码学入门到分流策略优化」](https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/)，已经是默认行为。
