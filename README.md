@@ -1,13 +1,11 @@
 ## powerfullz 的 Mihomo/Substore 覆写规则
 
-![](img/cover.png)
-
 [![](https://data.jsdelivr.com/v1/package/gh/powerfullz/override-rules/badge?style=rounded)](https://www.jsdelivr.com/package/gh/powerfullz/override-rules)
 
 本仓库为 Mihomo/Substore 设计，提供高效、灵活的覆写规则（**不建议用于 Stash**）。核心特色如下：
 
 * 集成 [SukkaW/Surge](https://github.com/SukkaW/Surge) 与 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 等优质规则，兼容性强，覆盖面广。
-* 针对 Truth Social、E-Hentai、TikTok、加密货币等场景，新增专用分流规则，满足多样化需求。
+* 针对 Truth Social、TikTok 等场景，新增专用分流规则，满足多样化需求。
 * 精简冗余，结构清晰，维护便捷。
 * 深度融合 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat) GeoSite/GeoIP，分流更精准。
 * IP 规则默认添加 `no-resolve`，有效减少本地 DNS 解析，提升速度与隐私。
@@ -16,20 +14,6 @@
 > 本项目为本人自用，欢迎交流建议（Issue/PR）。如无特殊反馈，将优先满足个人需求与体验优化。
 
 [点击访问 Forgejo 上的镜像](https://git.l3zc.com/powerfullz/override-rules)
-
-### AFF
-
-#### FlowerCloud
-
-[注册链接](https://api-flowercloud.com/aff.php?aff=4352)
-
-目前我的主力机场，也是一家老牌一线机场了，线路扎实，冗余足够，实验性节点0.2倍率，部分地区的高级节点是家宽落地，用起来还是很舒服的。
-
-#### 星岛梦
-
-[注册链接](https://luics.xdmvipaff.cc/#/?code=MMB4xSlc)
-
-星岛梦是一家 2025 年 12 月刚开业的机场，机场主在测试的时候就来找我了，我因此有幸从早期测试阶段便开始关注，见证了机场主熬夜修线路换落地的过程，目前体验还不错。算上日常折扣性价比还可以，大家可以月付体验一下。
 
 ### 使用方法
 
@@ -98,6 +82,8 @@ https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/preview/c
 **静态资源**：包含所有常见静态资源 CDN 域名、对象存储域名。大部分网站的静态资源（如图片、视频、音频、字体、JS、CSS）都有独立域名、不设置风控措施、不设置鉴权，这些静态资源可以使用 IP 不一定干净（例如 IDC 类 IP）、但是带宽更大、延时更低、而且有和大部分主流 CDN（如 Cloudflare、Akamai、Fastly、EdgeCast）在 IXP 有互联的网络出口。一般就实践经验来看，在正常上网中这部分域名产生的流量占据约 70% 左右。如果你在使用商业性质的远端策略服务提供商、且该服务上提供了低倍率节点，你可以将这部分域名分流至低倍率节点以节省流量。[^fn1]
 
 [^fn1]: 来源：[我有特别的 Surge 配置和使用技巧](https://blog.skk.moe/post/i-have-my-unique-surge-setup/)
+
+**国内服务**：收纳微博等国内服务及国内 IP 流量，默认直连，也支持直接勾选任意节点。
 
 **搜狗输入**：默认放行，作用是避免搜狗输入法将你输入的每一个字符自动收集并通过`get.sogou.com/q`等域名回传。隐私担忧者可以将其设置为`REJECT`，开启后会影响搜狗输入法账号同步、词库更新、问题反馈，但语音输入等其他功能可以正常使用。
 
