@@ -132,7 +132,7 @@ export function buildProxyGroups({
         },
         {
             name: PROXY_GROUPS.MICROSOFT,
-            icon: `${CDN_URL}/gh/powerfullz/override-rules@master/icons/Microsoft_Copilot.png`,
+            icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/Microsoft_Copilot.png`,
             type: "select",
             proxies: defaultProxies,
         },
@@ -176,7 +176,7 @@ export function buildProxyGroups({
         },
         {
             name: PROXY_GROUPS.PIKPAK,
-            icon: `${CDN_URL}/gh/powerfullz/override-rules@master/icons/PikPak.png`,
+            icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/PikPak.png`,
             type: "select",
             proxies: defaultProxies,
         },
@@ -189,7 +189,7 @@ export function buildProxyGroups({
         },
         {
             name: PROXY_GROUPS.SOGOU_INPUT,
-            icon: `${CDN_URL}/gh/powerfullz/override-rules@master/icons/Sougou.png`,
+            icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/Sougou.png`,
             type: "select",
             proxies: ["DIRECT", "REJECT"],
         },
