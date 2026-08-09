@@ -25,7 +25,7 @@ export const PROXY_GROUPS = {
     ASIA_STREAMING: "亚洲流媒体",
     BILIBILI: "哔哩哔哩",
     WESTERN_STREAMING: "欧美流媒体",
-    SOCIAL_MEDIA: "社交媒体",
+    SOCIAL_MEDIA: "国际社交",
     PC_GAMES: "PC游戏",
     DOMESTIC_SERVICE: "国内服务",
     GITHUB: "Github",

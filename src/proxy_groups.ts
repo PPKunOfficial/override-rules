@@ -75,7 +75,6 @@ export function buildProxyGroups({
 }: BuildProxyGroupsInput): ProxyGroup[] {
     const hasTW = countryNames.includes("台湾");
     const hasHK = countryNames.includes("香港");
-    const hasUS = countryNames.includes("美国");
     const groups: Array<ProxyGroup | null> = [
         {
             name: PROXY_GROUPS.SELECT,
@@ -181,12 +180,10 @@ export function buildProxyGroups({
         },
         {
             name: PROXY_GROUPS.SOCIAL_MEDIA,
-            icon: `${CDN_URL}/gh/Orz-3/mini@master/Color/Instagram.png`,
+            icon: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/icons/Telegram.png`,
             type: "select",
             "include-all": true,
-            proxies: hasUS
-                ? ["DIRECT", PROXY_GROUPS.SELECT, `美国节点`, PROXY_GROUPS.MANUAL]
-                : defaultProxiesDirect,
+            proxies: defaultProxies,
         },
         {
             name: PROXY_GROUPS.R18,
