@@ -1,5 +1,5 @@
 /*!
-powerfullz 的 Substore 订阅转换脚本
+powerfullz 的 Substore 订阅转换脚本 %%VERSION%%
 https://github.com/powerfullz/override-rules
 
 支持的传入参数：
