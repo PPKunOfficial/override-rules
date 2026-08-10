@@ -28,7 +28,6 @@ export function buildBaseLists({
         landing && PROXY_GROUPS.LANDING,
         suffixedCountryNames,
         lowCost && PROXY_GROUPS.LOW_COST,
-        PROXY_GROUPS.MANUAL,
         "DIRECT"
     );
 
@@ -37,8 +36,7 @@ export function buildBaseLists({
         "DIRECT",
         landing && PROXY_GROUPS.LANDING,
         suffixedCountryNames,
-        lowCost && PROXY_GROUPS.LOW_COST,
-        PROXY_GROUPS.MANUAL
+        lowCost && PROXY_GROUPS.LOW_COST
     );
 
     const defaultProxiesDirect = buildList(
@@ -46,8 +44,7 @@ export function buildBaseLists({
         PROXY_GROUPS.SELECT,
         landing && PROXY_GROUPS.LANDING,
         suffixedCountryNames,
-        lowCost && PROXY_GROUPS.LOW_COST,
-        PROXY_GROUPS.MANUAL
+        lowCost && PROXY_GROUPS.LOW_COST
     );
 
     const defaultFallback = buildList(landing && PROXY_GROUPS.LANDING, suffixedCountryNames);

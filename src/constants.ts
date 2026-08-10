@@ -11,7 +11,6 @@ export const LOW_COST_NODE_MATCHER = createCaseInsensitiveNodeMatcher(
 
 export const PROXY_GROUPS = {
     SELECT: "选择代理",
-    MANUAL: "手动选择",
     AUTO: "自动选择",
     FALLBACK: "故障转移",
     LANDING: "落地节点",

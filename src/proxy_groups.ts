@@ -83,12 +83,6 @@ export function buildProxyGroups({
             "include-all": true,
             proxies: defaultSelector,
         },
-        {
-            name: PROXY_GROUPS.MANUAL,
-            icon: `${CDN_URL}/gh/shindgewongxj/WHATSINStash@master/icon/select.png`,
-            "include-all": true,
-            type: "select",
-        },
         landing
             ? {
                   name: PROXY_GROUPS.FRONT_PROXY,
