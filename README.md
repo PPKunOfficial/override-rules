@@ -83,11 +83,13 @@ https://raw.githubusercontent.com/PPKunOfficial/override-rules/refs/heads/previe
 
 [^fn1]: 来源：[我有特别的 Surge 配置和使用技巧](https://blog.skk.moe/post/i-have-my-unique-surge-setup/)
 
-**国内服务**：收纳微博等国内服务及国内 IP 流量，默认直连，也支持直接勾选任意节点。
+**国内服务**：收纳微博、抖音等国内服务，以及 `geosite:cn` / 国内 IP 流量，默认直连，也支持直接勾选任意节点。
 
-**亚洲流媒体**：收纳除哔哩哔哩外的亚洲流媒体平台（巴哈姆特、Abema、Niconico、DMM、Disney+、Prime Video、Kakao、Viu、Hotstar、TVB、MyTV Super、TikTok），默认直连或港澳台节点。
+**亚洲流媒体**：收纳除哔哩哔哩、TikTok 外的亚洲流媒体平台（巴哈姆特、Abema、Niconico、DMM、Disney+、Prime Video、Kakao、Viu、Hotstar、TVB、MyTV Super），默认直连或港澳台节点。
 
 **哔哩哔哩**：独立分组，默认直连，也支持手动选择任意节点。
+
+**TikTok**：独立分组，默认走选择代理，可单独指定节点，不再跟亚洲流媒体绑在一起。
 
 **搜狗输入**：默认放行，作用是避免搜狗输入法将你输入的每一个字符自动收集并通过`get.sogou.com/q`等域名回传。隐私担忧者可以将其设置为`REJECT`，开启后会影响搜狗输入法账号同步、词库更新、问题反馈，但语音输入等其他功能可以正常使用。
 

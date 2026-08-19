@@ -23,6 +23,7 @@ export const PROXY_GROUPS = {
     MICROSOFT: "微软服务",
     ASIA_STREAMING: "亚洲流媒体",
     BILIBILI: "哔哩哔哩",
+    TIKTOK: "TikTok",
     WESTERN_STREAMING: "欧美流媒体",
     SOCIAL_MEDIA: "国际社交",
     PC_GAMES: "PC游戏",

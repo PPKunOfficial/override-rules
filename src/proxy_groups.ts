@@ -159,6 +159,13 @@ export function buildProxyGroups({
             proxies: defaultProxiesDirect,
         },
         {
+            name: PROXY_GROUPS.TIKTOK,
+            icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/TikTok.png`,
+            type: "select",
+            "include-all": true,
+            proxies: defaultProxies,
+        },
+        {
             name: PROXY_GROUPS.WESTERN_STREAMING,
             icon: `${CDN_URL}/gh/Koolson/Qure@master/IconSet/Color/ForeignMedia.png`,
             type: "select",
