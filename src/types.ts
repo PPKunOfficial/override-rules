@@ -108,7 +108,7 @@ export interface DnsConfig {
     ipv6: boolean;
     "prefer-h3": boolean;
     "enhanced-mode": "redir-host" | "fake-ip";
-    "default-nameserver": string[];
+    "default-nameserver"?: string[];
     nameserver: string[];
     fallback: string[];
     "proxy-server-nameserver": string[];

@@ -136,7 +136,6 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
         ipv6: ipv6Enabled,
         "prefer-h3": true,
         "enhanced-mode": mode,
-        "default-nameserver": ["119.29.29.29", "223.5.5.5"],
         nameserver: ["system", "223.5.5.5", "119.29.29.29", "180.184.1.1"],
         fallback: [
             "quic://dns0.eu",
