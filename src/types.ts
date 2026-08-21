@@ -158,6 +158,8 @@ export interface ClashProfile {
 
 export interface ClashConfig {
     proxies?: ProxyNode[];
+    /** Mihomo 根级 hosts 映射。 */
+    hosts?: Record<string, string | string[]>;
     "proxy-groups"?: ProxyGroup[];
     rules?: string[];
     "rule-providers"?: Record<string, RuleProvider>;
