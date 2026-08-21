@@ -128,6 +128,7 @@ export interface DnsConfig {
     "fake-ip-filter"?: string[];
 }
 
+/** Mihomo DNS Policy 支持的值类型。 */
 export type DnsPolicyValue = string | string[];
 
 export type RuleProviderType = "http" | "file";
