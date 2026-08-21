@@ -1,4 +1,4 @@
-import type { DnsConfig, SnifferConfig } from "./types";
+import type { DnsConfig, DnsPolicyValue, SnifferConfig } from "./types";
 
 /**
  * 默认的 fake-ip 过滤域名列表。
@@ -122,6 +122,110 @@ interface BuildDnsConfigInput {
     fakeIpFilter?: string[];
 }
 
+const DNS_LIST_FIELDS = [
+    "default-nameserver",
+    "nameserver",
+    "fallback",
+    "proxy-server-nameserver",
+    "direct-nameserver",
+] as const;
+
+const DNS_POLICY_FIELDS = ["nameserver-policy", "proxy-server-nameserver-policy"] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function getStringList(value: unknown): string[] | undefined {
+    return Array.isArray(value) && value.every((item) => typeof item === "string")
+        ? value
+        : undefined;
+}
+
+function mergeStringLists(current: string[] | undefined, upstream: unknown): string[] | undefined {
+    const upstreamList = getStringList(upstream);
+    if (!current && !upstreamList) return undefined;
+
+    return [...new Set([...(current ?? []), ...(upstreamList ?? [])])];
+}
+
+function isLocalDnsServer(value: string): boolean {
+    return /^(?:(?:udp|tcp|tls|https?|quic):\/\/)?(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|::1|\[::1\])(?::\d+)?(?:\/|$)/i.test(
+        value
+    );
+}
+
+function mergeDnsPolicies(
+    current: Record<string, DnsPolicyValue> | undefined,
+    upstream: unknown
+): Record<string, DnsPolicyValue> | undefined {
+    if (!isRecord(upstream)) return current;
+
+    const upstreamPolicy: Record<string, DnsPolicyValue> = {};
+    for (const [key, value] of Object.entries(upstream)) {
+        if (typeof value === "string") {
+            upstreamPolicy[key] = value;
+        } else if (getStringList(value)) {
+            upstreamPolicy[key] = value as string[];
+        }
+    }
+
+    return { ...(current ?? {}), ...upstreamPolicy };
+}
+
+function inheritDnsFields(generated: DnsConfig, upstream?: DnsConfig): DnsConfig {
+    if (!isRecord(upstream)) return generated;
+
+    const merged = { ...generated };
+
+    for (const field of DNS_LIST_FIELDS) {
+        const values = mergeStringLists(merged[field], upstream[field]);
+        if (values) merged[field] = values;
+    }
+
+    const hasUpstreamListen = typeof upstream.listen === "string" && upstream.listen.length > 0;
+    if (hasUpstreamListen) merged.listen = upstream.listen;
+
+    if (upstream["cache-algorithm"] === "lru" || upstream["cache-algorithm"] === "arc") {
+        merged["cache-algorithm"] = upstream["cache-algorithm"];
+    }
+    for (const field of ["use-hosts", "use-system-hosts", "respect-rules"] as const) {
+        if (typeof upstream[field] === "boolean") merged[field] = upstream[field];
+    }
+    for (const field of ["fake-ip-range", "fake-ip-range6"] as const) {
+        if (typeof upstream[field] === "string") merged[field] = upstream[field];
+    }
+    if (
+        upstream["fake-ip-filter-mode"] === "blacklist" ||
+        upstream["fake-ip-filter-mode"] === "whitelist" ||
+        upstream["fake-ip-filter-mode"] === "rule"
+    ) {
+        merged["fake-ip-filter-mode"] = upstream["fake-ip-filter-mode"];
+    }
+    if (typeof upstream["direct-nameserver-follow-policy"] === "boolean") {
+        merged["direct-nameserver-follow-policy"] = upstream["direct-nameserver-follow-policy"];
+    }
+    if (isRecord(upstream["fallback-filter"])) {
+        merged["fallback-filter"] = upstream["fallback-filter"];
+    }
+
+    for (const field of DNS_POLICY_FIELDS) {
+        const policy = mergeDnsPolicies(merged[field], upstream[field]);
+        if (policy) merged[field] = policy;
+    }
+
+    if (!hasUpstreamListen) {
+        merged["proxy-server-nameserver"] = merged["proxy-server-nameserver"].filter(
+            (server) => !isLocalDnsServer(server)
+        );
+    }
+
+    const fakeIpFilter = mergeStringLists(merged["fake-ip-filter"], upstream["fake-ip-filter"]);
+    if (fakeIpFilter) merged["fake-ip-filter"] = fakeIpFilter;
+
+    return merged;
+}
+
 /**
  * 构建 Clash DNS 配置对象。
  * @param {BuildDnsConfigInput} params - 构建参数
@@ -160,6 +264,7 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
 export interface BuildDnsInput {
     fakeIPEnabled: boolean;
     ipv6Enabled: boolean;
+    upstreamDns?: DnsConfig;
 }
 
 /**
@@ -169,9 +274,10 @@ export interface BuildDnsInput {
  * @param {boolean} params.ipv6Enabled - 是否启用 IPv6
  * @returns {DnsConfig} DNS 配置对象
  */
-export function buildDns({ fakeIPEnabled, ipv6Enabled }: BuildDnsInput): DnsConfig {
-    if (fakeIPEnabled) {
-        return buildDnsConfig({ mode: "fake-ip", ipv6Enabled, fakeIpFilter: FAKE_IP_FILTER });
-    }
-    return buildDnsConfig({ mode: "redir-host", ipv6Enabled });
+export function buildDns({ fakeIPEnabled, ipv6Enabled, upstreamDns }: BuildDnsInput): DnsConfig {
+    const generated = fakeIPEnabled
+        ? buildDnsConfig({ mode: "fake-ip", ipv6Enabled, fakeIpFilter: FAKE_IP_FILTER })
+        : buildDnsConfig({ mode: "redir-host", ipv6Enabled });
+
+    return inheritDnsFields(generated, upstreamDns);
 }

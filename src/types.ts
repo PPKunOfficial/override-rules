@@ -108,12 +108,27 @@ export interface DnsConfig {
     ipv6: boolean;
     "prefer-h3": boolean;
     "enhanced-mode": "redir-host" | "fake-ip";
+    listen?: string;
+    "cache-algorithm"?: "lru" | "arc";
+    "use-hosts"?: boolean;
+    "use-system-hosts"?: boolean;
+    "respect-rules"?: boolean;
+    "fake-ip-range"?: string;
+    "fake-ip-range6"?: string;
+    "fake-ip-filter-mode"?: "blacklist" | "whitelist" | "rule";
     "default-nameserver"?: string[];
     nameserver: string[];
     fallback: string[];
     "proxy-server-nameserver": string[];
+    "direct-nameserver"?: string[];
+    "nameserver-policy"?: Record<string, DnsPolicyValue>;
+    "proxy-server-nameserver-policy"?: Record<string, DnsPolicyValue>;
+    "direct-nameserver-follow-policy"?: boolean;
+    "fallback-filter"?: Record<string, unknown>;
     "fake-ip-filter"?: string[];
 }
+
+export type DnsPolicyValue = string | string[];
 
 export type RuleProviderType = "http" | "file";
 export type RuleProviderBehavior = "domain" | "classical" | "ipcidr";
