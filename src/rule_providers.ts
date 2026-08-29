@@ -42,6 +42,14 @@ export const ruleProviders: Record<string, RuleProvider> = {
         url: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/ruleset/TikTok.list`,
         path: "./ruleset/TikTok.list",
     },
+    ZCode: {
+        type: "http",
+        behavior: "classical",
+        format: "text",
+        interval: 86400,
+        url: `${CDN_URL}/gh/PPKunOfficial/override-rules@main/ruleset/ZCode.list`,
+        path: "./ruleset/ZCode.list",
+    },
     EHentai: {
         type: "http",
         behavior: "classical",
