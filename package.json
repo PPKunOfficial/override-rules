@@ -1,14 +1,15 @@
 {
   "name": "override-rules",
   "private": true,
-  "version": "2.5.14",
+  "version": "2.9.1",
   "description": "Override rules YAML generator",
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
-    "typecheck": "tsgo --noEmit",
+    "typecheck": "node node_modules/typescript-native/bin/tsc --noEmit",
     "build": "npm run typecheck && node scripts/build.mjs",
     "generate": "tsx scripts/yaml_generator/generator.ts",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
     "artifacts": "npm run build && npm run generate",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -24,18 +25,18 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@types/node": "^26.0.0",
-    "@typescript/native-preview": "^7.0.0-dev.20260619.1",
-    "esbuild": "^0.28.1",
-    "eslint": "^10.5.0",
+    "@types/node": "^26.2.0",
+    "esbuild": "^0.28.2",
+    "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
     "git-cliff": "^2.13.1",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.7",
-    "prettier": "^3.8.4",
-    "tsx": "^4.22.4",
+    "lint-staged": "^17.5.1",
+    "prettier": "^3.9.7",
+    "tsx": "^4.23.13",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.61.1"
+    "typescript-eslint": "^8.70.0",
+    "typescript-native": "npm:typescript@^7.0.2"
   },
   "lint-staged": {
     "*.{ts,js,json,md,yml,yaml}": [
@@ -43,6 +44,6 @@
     ]
   },
   "allowScripts": {
-    "esbuild@0.28.1": true
+    "esbuild@0.28.2": true
   }
 }

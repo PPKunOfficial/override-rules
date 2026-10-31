@@ -1,1 +1,11 @@
+# ZCode —— Z.ai 官方 AI 编程客户端（桌面版 IDE / CLI）
+# 文档：https://zcode.z.ai/en/docs
+# 覆盖 z.ai 及其全部子域：
+#   z.ai            平台主站，自动跳转 chat.z.ai
+#   chat.z.ai       网页版对话
+#   api.z.ai        模型 API（Anthropic: /api/anthropic，OpenAI: /api/coding/paas/v4）
+#   zcode.z.ai      ZCode 客户端与账号授权（Coding Plan 登录）
+#   cdn-zcode.z.ai  ZCode 安装包与热更新分发
+#   docs.z.ai       开发者文档
+# 国内 GLM Coding Plan 走 open.bigmodel.cn，属国内直连，不纳入本规则集。
 DOMAIN-SUFFIX,z.ai

@@ -1,13 +1,17 @@
-import type { DnsConfig, DnsPolicyValue, SnifferConfig } from "./types";
+/**
+ * DNS 配置构建，包含 fake-ip 过滤列表与上游 DNS 字段继承。
+ */
+
+import type { DnsConfig, DnsPolicyValue } from "../types/clash";
 
 /**
- * 默认的 fake-ip 过滤域名列表。
- * 这些域名不会被 fake-ip 机制代理。
+ * 默认的 fake-ip 过滤域名列表：这些域名不会被 fake-ip 机制代理。
  */
 const FAKE_IP_FILTER = [
     "geosite:connectivity-check",
     "Mijia Cloud",
     "dig.io.mi.com",
+    "localhost.ptlogin2.qq.com",
     "*.icloud.com",
     "*.stun.*.*",
     "*.stun.*.*.*",
@@ -92,45 +96,6 @@ const FAKE_IP_FILTER = [
     "+.apt-agent.com",
 ];
 
-/**
- * 嗅探器配置。
- */
-export const snifferConfig: SnifferConfig = {
-    sniff: {
-        TLS: {
-            ports: [443, 8443],
-        },
-        HTTP: {
-            ports: [80, 8080, 8880],
-        },
-        QUIC: {
-            ports: [443, 8443],
-        },
-    },
-    "override-destination": false,
-    enable: true,
-    "force-dns-mapping": true,
-    "skip-domain": ["Mijia Cloud", "dlg.io.mi.com", "+.push.apple.com"],
-};
-
-/**
- * 构建 DNS 配置的输入参数类型。
- */
-interface BuildDnsConfigInput {
-    mode: "redir-host" | "fake-ip";
-    ipv6Enabled: boolean;
-    fakeIpFilter?: string[];
-}
-
-/** 支持与上游配置合并的 DNS 字符串列表字段。 */
-const DNS_LIST_FIELDS = [
-    "default-nameserver",
-    "nameserver",
-    "fallback",
-    "proxy-server-nameserver",
-    "direct-nameserver",
-] as const;
-
 /** 支持从上游配置继承的 DNS Policy 字段。 */
 const DNS_POLICY_FIELDS = ["nameserver-policy", "proxy-server-nameserver-policy"] as const;
 
@@ -154,14 +119,7 @@ function mergeStringLists(current: string[] | undefined, upstream: unknown): str
     return [...new Set([...(current ?? []), ...(upstreamList ?? [])])];
 }
 
-/** 判断 DNS 服务器地址是否指向本机监听地址。 */
-function isLocalDnsServer(value: string): boolean {
-    return /^(?:(?:udp|tcp|tls|https?|quic):\/\/)?(?:localhost|127(?:\.\d{1,3}){3}|0\.0\.0\.0|::1|\[::1\])(?::\d+)?(?:\/|$)/i.test(
-        value
-    );
-}
-
-/** 合并 DNS Policy，仅保留 Mihomo 支持的字符串或字符串数组值。 */
+/** 合并 DNS Policy，仅保留 Clash 支持的字符串或字符串数组值。 */
 function mergeDnsPolicies(
     current: Record<string, DnsPolicyValue> | undefined,
     upstream: unknown
@@ -180,52 +138,15 @@ function mergeDnsPolicies(
     return { ...(current ?? {}), ...upstreamPolicy };
 }
 
-/** 继承允许的上游 DNS 字段，同时保留脚本控制字段的优先级。 */
+/** 仅合并允许继承的上游 DNS 字段，同时保留脚本控制字段的优先级。 */
 function inheritDnsFields(generated: DnsConfig, upstream?: DnsConfig): DnsConfig {
     if (!isRecord(upstream)) return generated;
 
     const merged = { ...generated };
 
-    for (const field of DNS_LIST_FIELDS) {
-        const values = mergeStringLists(merged[field], upstream[field]);
-        if (values) merged[field] = values;
-    }
-
-    const hasUpstreamListen = typeof upstream.listen === "string" && upstream.listen.length > 0;
-    if (hasUpstreamListen) merged.listen = upstream.listen;
-
-    if (upstream["cache-algorithm"] === "lru" || upstream["cache-algorithm"] === "arc") {
-        merged["cache-algorithm"] = upstream["cache-algorithm"];
-    }
-    for (const field of ["use-hosts", "use-system-hosts", "respect-rules"] as const) {
-        if (typeof upstream[field] === "boolean") merged[field] = upstream[field];
-    }
-    for (const field of ["fake-ip-range", "fake-ip-range6"] as const) {
-        if (typeof upstream[field] === "string") merged[field] = upstream[field];
-    }
-    if (
-        upstream["fake-ip-filter-mode"] === "blacklist" ||
-        upstream["fake-ip-filter-mode"] === "whitelist" ||
-        upstream["fake-ip-filter-mode"] === "rule"
-    ) {
-        merged["fake-ip-filter-mode"] = upstream["fake-ip-filter-mode"];
-    }
-    if (typeof upstream["direct-nameserver-follow-policy"] === "boolean") {
-        merged["direct-nameserver-follow-policy"] = upstream["direct-nameserver-follow-policy"];
-    }
-    if (isRecord(upstream["fallback-filter"])) {
-        merged["fallback-filter"] = upstream["fallback-filter"];
-    }
-
     for (const field of DNS_POLICY_FIELDS) {
         const policy = mergeDnsPolicies(merged[field], upstream[field]);
         if (policy) merged[field] = policy;
-    }
-
-    if (!hasUpstreamListen) {
-        merged["proxy-server-nameserver"] = merged["proxy-server-nameserver"].filter(
-            (server) => !isLocalDnsServer(server)
-        );
     }
 
     const fakeIpFilter = mergeStringLists(merged["fake-ip-filter"], upstream["fake-ip-filter"]);
@@ -234,14 +155,13 @@ function inheritDnsFields(generated: DnsConfig, upstream?: DnsConfig): DnsConfig
     return merged;
 }
 
-/**
- * 构建 Clash DNS 配置对象。
- * @param {BuildDnsConfigInput} params - 构建参数
- * @param {('redir-host'|'fake-ip')} params.mode - DNS 增强模式
- * @param {boolean} params.ipv6Enabled - 是否启用 IPv6
- * @param {string[]=} params.fakeIpFilter - fake-ip 过滤域名列表（可选）
- * @returns {DnsConfig} DNS 配置对象
- */
+interface BuildDnsConfigInput {
+    mode: "redir-host" | "fake-ip";
+    ipv6Enabled: boolean;
+    fakeIpFilter?: string[];
+}
+
+/** 生成脚本控制的核心 DNS 设置。 */
 function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput): DnsConfig {
     const config: DnsConfig = {
         enable: true,
@@ -256,7 +176,6 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
             "tcp://208.67.222.222",
             "tcp://8.26.56.2",
         ],
-        "proxy-server-nameserver": ["https://dns.alidns.com/dns-query", "tls://dot.pub"],
     };
 
     if (fakeIpFilter) {
@@ -266,9 +185,7 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
     return config;
 }
 
-/**
- * 构建 DNS 配置的输入参数类型（外部接口）。
- */
+/** 构建 DNS 配置的输入参数。 */
 export interface BuildDnsInput {
     fakeIPEnabled: boolean;
     ipv6Enabled: boolean;
@@ -277,12 +194,8 @@ export interface BuildDnsInput {
 }
 
 /**
- * 根据 fakeIP 和 IPv6 开关生成最终 DNS 配置。
- * @param {BuildDnsInput} params - 构建参数
- * @param {boolean} params.fakeIPEnabled - 是否启用 fake-ip 模式
- * @param {boolean} params.ipv6Enabled - 是否启用 IPv6
- * @param {DnsConfig} params.upstreamDns - 上游 DNS 配置（可选）
- * @returns {DnsConfig} DNS 配置对象
+ * 根据 fakeIP 与 IPv6 开关生成最终 DNS 配置，并合并上游允许继承的字段。
+ * @param input - 详见 `BuildDnsInput`
  */
 export function buildDns({ fakeIPEnabled, ipv6Enabled, upstreamDns }: BuildDnsInput): DnsConfig {
     const generated = fakeIPEnabled
