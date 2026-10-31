@@ -119,6 +119,18 @@ describe("buildRules", () => {
         );
     });
 
+    it("Steam 下载直连排在静态资源之前，避免被静态资源组接走", () => {
+        const rules = buildRules({ quicEnabled: true, hasTailscale: false });
+        const steamFix = rules.indexOf("RULE-SET,SteamFix,DIRECT");
+        const staticResources = rules.indexOf(
+            `RULE-SET,StaticResources,${PROXY_GROUPS.STATIC_RESOURCES}`
+        );
+
+        assert.ok(steamFix >= 0, "缺少 SteamFix 规则");
+        assert.ok(staticResources >= 0, "缺少静态资源规则");
+        assert.ok(steamFix < staticResources, "SteamFix 必须排在静态资源之前");
+    });
+
     it("所有引用的规则集均已注册", () => {
         const rules = buildRules({ quicEnabled: true, hasTailscale: true });
         for (const rule of rules) {

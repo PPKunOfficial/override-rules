@@ -67,6 +67,10 @@ export function buildRules({
         ...(pcGameEnabled
             ? PC_GAME_PROCESSES.map((exe) => `PROCESS-NAME,${exe},${PROXY_GROUPS.PC_GAME}`)
             : []),
+        // Steam 下载 / P2P 域名直连。必须排在「静态资源」之前：skk 的静态资源规则集
+        // 自带 steamcdn-a.akamaihd.net、media.steampowered.com 等条目，排在后面的话
+        // Steam 下载会被静态资源组（走代理）接走，这条直连永远不生效。
+        ruleSet("SteamFix", "DIRECT"),
         ruleSet("ADBlock", PROXY_GROUPS.AD_BLOCK),
         ruleSet("AdditionalFilter", PROXY_GROUPS.AD_BLOCK),
         ruleSet("SogouInput", PROXY_GROUPS.SOGOU_INPUT),
@@ -94,7 +98,6 @@ export function buildRules({
         ruleSet("Weibo", PROXY_GROUPS.WEIBO),
         ruleSet("EHentai", PROXY_GROUPS.EHENTAI),
         ruleSet("TikTok", PROXY_GROUPS.TIKTOK),
-        ruleSet("SteamFix", "DIRECT"),
         ruleSet("GoogleFCM", "DIRECT"),
         `DOMAIN-REGEX,${GOOGLE_PLAY_CN_HOST_REGEX},DIRECT`,
         `GEOSITE,google-play@cn,DIRECT`,

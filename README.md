@@ -106,7 +106,7 @@ https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/preview/c
 
 **Play 商店修复**：国行设备通过 `services.googleapis.cn` 获取 Google Play 服务。该域名由 `GEOSITE,google` 分流至「谷歌服务」代理组；而应用下载实际落在 `xn--ngstr-lra8j.com` 的大陆 CDN 节点（北京 `2x3`、上海 `ni5`、广州 `j5o`）上，本覆写规则额外用一条 `DOMAIN-REGEX` 把这些节点直连，避免下载「等待中…」或因绕路代理而龟速。详见：[「Google Play 商店的国内 CDN：从密码学入门到分流策略优化」](https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/)。
 
-~~**Steam 修复**：~~ 用于让 Steam 客户端调用国内 CDN 及 P2P 网络下载，节省大量流量，已经是默认行为。
+**Steam 修复**：让 Steam 客户端调用国内 CDN 及 P2P 网络下载，节省大量流量，默认开启且不需要参数。`SteamFix` 规则集（`steamcdn-a.akamaihd.net`、`cm.steampowered.com`、`steamserver.net`）直连，并且**排在「静态资源」规则集之前**——静态资源规则集本身带有 `steamcdn-a.akamaihd.net`、`media.steampowered.com`、`+ .steamstatic.com`、`+.steamusercontent.com` 等条目，排在其后的直连规则会被静态资源组（走节点）抢走，导致下载照旧绕路。
 
 ### 关于游戏直连的说明
 
