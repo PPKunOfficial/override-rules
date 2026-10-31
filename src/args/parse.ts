@@ -2,6 +2,7 @@
  * URL 参数解析：将原始字符串参数转换为类型安全的 `FeatureFlags`。
  */
 
+import { parseProcessNames } from "../catalog/processes";
 import { parseBool, parseNumber } from "../utils/primitives";
 import { ARG_DEFAULTS } from "./schema";
 import type { FeatureFlags, GroupType, ScriptArgs } from "../types/args";
@@ -38,5 +39,7 @@ export function buildFeatureFlags(args: ScriptArgs): FeatureFlags {
         regexFilter: parseBool(args.regex),
         tunEnabled: parseBool(args.tun),
         countryThreshold: parseNumber(args.threshold, ARG_DEFAULTS.countryThreshold),
+        directProcesses: parseProcessNames(args.procdirect),
+        proxyProcesses: parseProcessNames(args.procproxy),
     };
 }

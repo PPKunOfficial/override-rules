@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { buildFeatureFlags } from "../../src/args/parse";
+import { parseProcessNames } from "../../src/catalog/processes";
 import { ARG_DEFAULTS } from "../../src/args/schema";
 
 describe("buildFeatureFlags", () => {
@@ -36,5 +37,36 @@ describe("buildFeatureFlags", () => {
 
     it("fakeip 显式传 false 时关闭", () => {
         assert.equal(buildFeatureFlags({ fakeip: "false" }).fakeIPEnabled, false);
+    });
+
+    it("解析 procdirect / procproxy", () => {
+        const flags = buildFeatureFlags({
+            procdirect: "GenshinImpact.exe|League of Legends.exe",
+            procproxy: "WeChat.exe",
+        });
+        assert.deepEqual(flags.directProcesses, ["GenshinImpact.exe", "League of Legends.exe"]);
+        assert.deepEqual(flags.proxyProcesses, ["WeChat.exe"]);
+    });
+});
+
+describe("parseProcessNames", () => {
+    it("支持逗号、竖线、分号与换行分隔", () => {
+        assert.deepEqual(parseProcessNames("a.exe,b.exe|c.exe;d.exe\ne.exe"), [
+            "a.exe",
+            "b.exe",
+            "c.exe",
+            "d.exe",
+            "e.exe",
+        ]);
+    });
+
+    it("过滤空项与大小写重复", () => {
+        assert.deepEqual(parseProcessNames(" a.exe , A.EXE ,, "), ["a.exe"]);
+    });
+
+    it("过滤含分隔符、路径与超长内容的非法项", () => {
+        assert.deepEqual(parseProcessNames("C:\Games\a.exe"), []);
+        assert.deepEqual(parseProcessNames("bad*name.exe"), []);
+        assert.deepEqual(parseProcessNames(`${"x".repeat(70)}.exe`), []);
     });
 });

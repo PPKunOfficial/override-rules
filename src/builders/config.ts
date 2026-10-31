@@ -55,7 +55,12 @@ export function assembleConfig(
         ...(flags.fullConfig && buildFullConfig(flags)),
         "proxy-groups": appendGlobalGroup(proxyGroups),
         "rule-providers": ruleSets,
-        rules: buildRules({ quicEnabled: flags.quicEnabled, hasTailscale: nodes.hasTailscale }),
+        rules: buildRules({
+            quicEnabled: flags.quicEnabled,
+            hasTailscale: nodes.hasTailscale,
+            directProcesses: flags.directProcesses,
+            proxyProcesses: flags.proxyProcesses,
+        }),
         sniffer: snifferConfig,
         dns: buildDns({
             fakeIPEnabled: flags.fakeIPEnabled,
@@ -63,6 +68,9 @@ export function assembleConfig(
             upstreamDns: config.dns,
         }),
         tun: buildTunConfig(flags.tunEnabled, nodes.hasTailscale),
+        // 存在 PROCESS-NAME 规则时必须开启进程查找（strict 只在有进程规则时才查，
+        // 没有进程规则时开销可忽略）。
+        "find-process-mode": "strict",
         "geodata-mode": true,
         "geox-url": geoxUrl,
     };

@@ -14,6 +14,8 @@ https://github.com/powerfullz/override-rules
 - quic: 允许 QUIC 流量（UDP 443，默认 false）
 - threshold: 地区节点数量小于该值时不显示分组（默认 2）
 - regex: 使用正则过滤模式（include-all + filter）写入各地区代理组，而非直接枚举节点名称（默认 false）
+- procdirect: 指定进程名一律直连，多个用逗号或竖线分隔（如 GenshinImpact.exe|League of Legends.exe）
+- procproxy: 指定进程名一律走「选择代理」，多个用逗号或竖线分隔
 
 源码位于 `src/`，入口为 `src/main.ts`。
 */

@@ -13,6 +13,7 @@
 * IP 规则默认添加 `no-resolve`，有效减少本地 DNS 解析，提升速度与隐私。
 * DNS 国内域名走阿里 / 腾讯加密 DoH、DoT，海外域名走经代理的海外加密 DNS（Cloudflare / Google / Quad9）；上游全部为 IP 直连端点、无明文解析，不使用系统或运营商下发解析器，并带污染检测兜底与 `geosite:cn` / `geolocation-!cn` 分区解析。
 * 动态覆写：自动识别节点国家/地区，仅生成实际存在的分组，节点名称实时枚举，配置更智能。
+* 按进程分流：`procdirect` / `procproxy` 参数把指定程序固定为直连或走代理，游戏、国服客户端之类不想过节点的程序可以单独拎出来。
 * 家宽选择：额外生成一个「家宽节点」组，直接列出全部节点由你手动挑选，需要固定住宅 IP 时选一次即可，不依赖节点命名规律。
 
 > 本项目为本人自用，欢迎交流建议（Issue/PR）。如无特殊反馈，将优先满足个人需求与体验优化。
@@ -53,6 +54,8 @@
 *   `regex`：各国家/地区代理组与分组模式下的「手动选择」组改用 `include-all` 模式，由 Mihomo 内核在运行时动态填充节点（地区组再附加正则 `filter`）；展平模式下的各服务组也直接使用同一套展平节点候选（`regex=true` 时为 `include-all`，并通过 `exclude-filter` 排除落地节点与 Tailscale 节点），而非在脚本执行时枚举节点名称（默认 false）[^regex]
 *   `tun`：启用 TUN 模式（gvisor 栈，自动配置路由排除地址与 DNS 劫持，默认 false）
 *   `threshold`：国家/地区节点数量小于该值时不显示分组（默认 2）；过滤后不足 2 个地区时自动展平，不再生成地区组
+*   `procdirect`：以逗号或竖线分隔的进程名（如 `GenshinImpact.exe|League of Legends.exe`），这些程序的流量一律直连、不经过任何节点（默认空）[^proc]
+*   `procproxy`：同样格式的进程名，一律走「选择代理」，用于被域名规则判成直连、但你想走代理的程序（默认空）[^proc]
 
 > **向后兼容**：旧的 `loadbalance` 参数仍然可用。当 `grouptype` 未指定时，`loadbalance=true` 等价于 `grouptype=2`，`loadbalance=false` 等价于 `grouptype=1`。
 
@@ -62,6 +65,8 @@
 [^regex]: 默认情况下覆写脚本会直接把节点都筛选好，如果想让内核来筛（比如，你在 Clash Party 客户端里额外添加了自建节点，想直接通过正则表达式筛选进入配置文件）那就打开吧。展平模式下同样使用 `include-all`，并通过 `exclude-filter` 排除落地节点与 Tailscale 节点，避免链式代理形成循环，也避免 Tailscale 混入通用选择列表。
 
 说明：支持字符串 true/false 或 1/0；。注：预生成的 YAML 格式覆写（`yamls/` 目录）固定使用正则模式，不受此参数影响。
+
+[^proc]: 进程名就是任务管理器里的映像名（一般带 `.exe`），必须与内核看到的名称一致；`PROCESS-NAME` 规则依赖进程查找，本项目已在配置里固定 `find-process-mode: strict`（只在存在进程规则时才查，无进程规则时没有额外开销）。注意 TUN 模式下这些程序的流量仍然要经过内核转发，`DIRECT` 只是不出节点；想让程序完全不碰内核属于系统层排除，Clash 系客户端没有按进程绕过 TUN 的开关。
 
 [^fn2]: 无特殊需求不要启用，否则会造成[移动设备异常耗电问题](https://github.com/vernesong/OpenClash/issues/2614)。
 

@@ -27,6 +27,36 @@ describe("buildRules", () => {
         assert.ok(!rules.some((rule) => rule.includes("Tailscale")));
     });
 
+    it("默认不生成进程规则", () => {
+        const rules = buildRules({ quicEnabled: true, hasTailscale: false });
+        assert.ok(!rules.some((rule) => rule.startsWith("PROCESS-NAME,")));
+    });
+
+    it("procdirect 生成直连的进程规则，并排在域名规则之前", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            directProcesses: ["GenshinImpact.exe", "League of Legends.exe"],
+        });
+
+        assert.ok(rules.includes("PROCESS-NAME,GenshinImpact.exe,DIRECT"));
+        assert.ok(rules.includes("PROCESS-NAME,League of Legends.exe,DIRECT"));
+
+        const firstProcess = rules.findIndex((rule) => rule.startsWith("PROCESS-NAME,"));
+        const firstRuleSet = rules.findIndex((rule) => rule.startsWith("RULE-SET,"));
+        assert.ok(firstProcess < firstRuleSet, "进程规则必须排在域名/规则集规则之前");
+    });
+
+    it("procproxy 把进程固定到选择代理", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            proxyProcesses: ["WeChat.exe"],
+        });
+
+        assert.ok(rules.includes(`PROCESS-NAME,WeChat.exe,${PROXY_GROUPS.SELECT}`));
+    });
+
     it("所有引用的规则集均已注册", () => {
         const rules = buildRules({ quicEnabled: true, hasTailscale: true });
         for (const rule of rules) {

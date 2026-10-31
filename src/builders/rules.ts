@@ -12,6 +12,10 @@ import { isNotNull } from "../utils/primitives";
 export interface BuildRulesInput {
     quicEnabled: boolean;
     hasTailscale: boolean;
+    /** 一律直连的进程名（来自 `procdirect` 参数）。 */
+    directProcesses?: string[];
+    /** 一律走「选择代理」的进程名（来自 `procproxy` 参数）。 */
+    proxyProcesses?: string[];
 }
 
 /**
@@ -31,14 +35,25 @@ export const GOOGLE_PLAY_CN_HOST_REGEX =
  * 构建最终的规则列表。
  * @param input.quicEnabled - 是否允许 QUIC（未启用时插入 UDP:443 拦截规则）
  * @param input.hasTailscale - 是否存在 Tailscale 节点（决定是否生成 Tailscale 分流规则）
+ * @param input.directProcesses - 一律直连的进程名
+ * @param input.proxyProcesses - 一律走「选择代理」的进程名
  */
-export function buildRules({ quicEnabled, hasTailscale }: BuildRulesInput): string[] {
+export function buildRules({
+    quicEnabled,
+    hasTailscale,
+    directProcesses = [],
+    proxyProcesses = [],
+}: BuildRulesInput): string[] {
     return [
         !quicEnabled ? `AND,((DST-PORT,443),(NETWORK,UDP)),REJECT` : null,
         hasTailscale ? `IP-CIDR,100.64.0.0/10,${PROXY_GROUPS.TAILSCALE},no-resolve` : null,
         hasTailscale ? `IP-CIDR,fd7a:115c:a1e0::/48,${PROXY_GROUPS.TAILSCALE},no-resolve` : null,
         hasTailscale ? `DOMAIN-SUFFIX,ts.net,${PROXY_GROUPS.TAILSCALE}` : null,
         `GEOIP,private,DIRECT,no-resolve`,
+        // 进程规则放在最前面：一旦命中就完全绕开后续域名规则，
+        // 否则广告拦截、静态资源等规则会先把这个程序的流量接走。
+        ...directProcesses.map((name) => `PROCESS-NAME,${name},DIRECT`),
+        ...proxyProcesses.map((name) => `PROCESS-NAME,${name},${PROXY_GROUPS.SELECT}`),
         ruleSet("ADBlock", PROXY_GROUPS.AD_BLOCK),
         ruleSet("AdditionalFilter", PROXY_GROUPS.AD_BLOCK),
         ruleSet("SogouInput", PROXY_GROUPS.SOGOU_INPUT),
