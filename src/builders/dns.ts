@@ -126,17 +126,19 @@ const DOMESTIC_BOOTSTRAP_DNS = ["223.5.5.5", "119.29.29.29", "180.184.1.1"];
 const PROXY_SERVER_DNS = ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query"];
 
 /**
- * 海外域名的兜底上游。
+ * 海外域名的解析上游。
  *
- * 仅在 `fallback-filter` 判定主上游返回了被污染的结果（国内 IP、保留地址段）时启用，
- * 因此这些经常被干扰的海外解析器不会影响日常国内解析速度。
+ * 这些解析器在大陆直连基本不可达（明文与 DoH 都会被干扰），因此每条都带 `#RULES` 后缀：
+ * 该服务器自身的连接按 `rules` 匹配，命中代理组时经代理访问，从而拿到未经污染的海外结果。
+ * 由于要经 TCP 代理转发，这里只用 DoH/DoT，不用 DoQ（QUIC 走 UDP，无法被 HTTP/SOCKS 代理承载）；
+ * 并且优先使用 IP 直连端点，避免主机名被国内引导解析劫持到 `127.0.0.1`（实测 `dns.sb` 曾被这样投毒）。
  */
 const FOREIGN_DNS_SERVERS = [
-    "quic://dns0.eu",
-    "https://dns.cloudflare.com/dns-query",
-    "https://dns.sb/dns-query",
-    "tcp://208.67.222.222",
-    "tcp://8.26.56.2",
+    "https://1.1.1.1/dns-query#RULES",
+    "https://8.8.8.8/dns-query#RULES",
+    "tls://dns.quad9.net#RULES",
+    "https://dns.google/dns-query#RULES",
+    "https://cloudflare-dns.com/dns-query#RULES",
 ];
 
 /** 判断 DNS 上游返回的地址是否已被污染，需要走海外兜底。 */
@@ -213,7 +215,8 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
     const config: DnsConfig = {
         enable: true,
         ipv6: ipv6Enabled,
-        "prefer-h3": true,
+        // 海外上游经代理转发，QUIC/h3 无法被 HTTP/SOCKS 代理承载，统一走 TCP 上的 HTTP2
+        "prefer-h3": false,
         "cache-algorithm": "arc",
         "enhanced-mode": mode,
         "default-nameserver": DOMESTIC_BOOTSTRAP_DNS,
@@ -221,6 +224,7 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
         "proxy-server-nameserver": PROXY_SERVER_DNS,
         "nameserver-policy": {
             "geosite:cn": [...DOMESTIC_DNS_SERVERS],
+            "geosite:geolocation-!cn": [...FOREIGN_DNS_SERVERS],
         },
         fallback: FOREIGN_DNS_SERVERS,
         "fallback-filter": FALLBACK_FILTER,

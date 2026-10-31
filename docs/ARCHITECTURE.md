@@ -167,20 +167,26 @@ flowchart TD
 
 ### DNS 解析策略
 
-`src/builders/dns.ts` 内置一套「国内加密解析 + 海外污染兜底」的默认值，不依赖系统（运营商下发）解析器：
+`src/builders/dns.ts` 内置一套「国内域名走国内加密 DNS、海外域名走海外 DNS」的默认值，不依赖系统（运营商下发）解析器：
 
 | 字段 | 内容 | 作用 |
 | --- | --- | --- |
-| `default-nameserver` | `223.5.5.5`、`119.29.29.29`、`180.184.1.1` | 仅用于引导解析其他 DNS 服务商域名 |
-| `nameserver` | `https://dns.alidns.com/dns-query`、`https://doh.pub/dns-query`、`tls://dot.pub`、`180.184.1.1` | 国内上游，加密优先，末位保留一个明文兜底 |
+| `default-nameserver` | `223.5.5.5`、`119.29.29.29`、`180.184.1.1` | 仅用于引导解析 DNS 服务商自己的域名 |
+| `nameserver` | `https://dns.alidns.com/dns-query`、`https://doh.pub/dns-query`、`tls://dot.pub`、`180.184.1.1` | 默认上游（国内），加密优先，末位保留一个明文兜底 |
 | `proxy-server-nameserver` | 阿里 / 腾讯 DoH | 解析 `server` 域名，避免「解析代理域名又需要代理」的死循环 |
-| `nameserver-policy: geosite:cn` | 与 `nameserver` 相同 | 国内域名显式分区，保证命中国内加密上游 |
-| `fallback` | `quic://dns0.eu`、`dns.cloudflare.com`、`dns.sb`、`tcp://208.67.222.222`、`tcp://8.26.56.2` | 仅在判定被污染时启用 |
-| `fallback-filter` | `geoip: true` + `geoip-code: CN` + `ipcidr: 240.0.0.0/4, 0.0.0.0/32` | 海外域名返回国内地址或保留地址时视为污染，强制走 `fallback` |
+| `nameserver-policy: geosite:cn` | 与 `nameserver` 相同 | 国内域名显式分区到国内加密上游 |
+| `nameserver-policy: geosite:geolocation-!cn` | `fallback` 中的海外上游 | 海外域名直接交给海外 DNS，不再由国内上游先答一遍 |
+| `fallback` | `https://1.1.1.1/dns-query`、`https://8.8.8.8/dns-query`、`tls://dns.quad9.net`、`https://dns.google/dns-query`、`https://cloudflare-dns.com/dns-query`，每条带 `#RULES` | 海外解析上游 |
+| `fallback-filter` | `geoip: true` + `geoip-code: CN` + `ipcidr: 240.0.0.0/4, 0.0.0.0/32` | 未命中分区的域名若返回国内地址或保留地址，视为污染并强制走 `fallback` |
+| `prefer-h3` | `false` | 海外 DoH 经 TCP 代理转发，QUIC/h3（UDP）无法被 HTTP/SOCKS 代理承载 |
 
-默认用 `fake-ip`，被代理的域名不会以污染结果落地——本地只回 `198.18.0.0/16` 的假地址，真实解析交给代理端完成，因此不额外配置 `fallback-filter.domain`（海外 `fallback` 在大陆直连普遍不可达，强推反而更糟）。
+关于 `#RULES`：这是 mihomo 的按服务器后缀，表示**该 DNS 服务器自身的连接**按 `rules` 匹配。海外解析器在大陆直连会被干扰（实测 DoH 报 `CRYPTO_ERROR 0x128`），加上 `#RULES` 后它们的连接会命中 `MATCH,漏网之鱼` 之类的代理规则、经代理建立，从而拿到未经污染的海外结果。这比全局 `respect-rules: true` 更可控——国内上游仍然直连，不受规则影响。
 
-上游订阅的 `nameserver-policy` 会被合并进来，与脚本默认的 `geosite:cn` 分区并存。
+选择上游时优先用 IP 直连端点（`1.1.1.1`、`8.8.8.8`），因为主机名要靠 `default-nameserver` 引导解析，实测 `dns.sb` 会被国内引导解析投毒到 `127.0.0.1`，因此从默认列表中移除。
+
+默认用 `fake-ip`，被代理的域名不会以污染结果落地——本地只回 `198.18.0.0/16` 的假地址；`redir-host` 模式下则由上面的海外上游给出真实地址。
+
+上游订阅的 `nameserver-policy` 会被合并进来，与脚本默认的两个分区并存。
 
 ### YAML Generator 的参数
 

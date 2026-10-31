@@ -77,18 +77,38 @@ describe("buildDns", () => {
         assert.ok(proxyDns.every((server) => server.startsWith("https://")));
     });
 
-    it("国内域名分区解析，海外域名仅在污染时兜底", () => {
+    it("国内域名走加密上游，海外域名走海外上游", () => {
         const dns = buildDns({ fakeIPEnabled: true, ipv6Enabled: false });
         const policy = dns["nameserver-policy"] ?? {};
 
         assert.deepEqual(policy["geosite:cn"], dns.nameserver);
-        assert.deepEqual(Object.keys(policy), ["geosite:cn"]);
+        assert.deepEqual(policy["geosite:geolocation-!cn"], dns.fallback);
+        assert.deepEqual(Object.keys(policy), ["geosite:cn", "geosite:geolocation-!cn"]);
         assert.deepEqual(dns["fallback-filter"], {
             geoip: true,
             "geoip-code": "CN",
             ipcidr: ["240.0.0.0/4", "0.0.0.0/32"],
         });
         assert.ok(dns.fallback.every((server) => !server.includes("114.")));
+    });
+
+    it("海外上游加密且遵循规则走代理", () => {
+        const dns = buildDns({ fakeIPEnabled: true, ipv6Enabled: false });
+
+        for (const server of dns.fallback) {
+            assert.ok(server.endsWith("#RULES"), `${server} 缺少 #RULES，会在直连时被污染`);
+            assert.match(server, /^(https|tls):\/\//, `${server} 应为加密上游`);
+        }
+
+        assert.ok(
+            dns.fallback.every((server) => !server.startsWith("quic://")),
+            "DoQ 走 UDP，无法被代理承载"
+        );
+        assert.ok(
+            dns.fallback.some((server) => /^https:\/\/[0-9.]+/.test(server)),
+            "至少应有一个 IP 直连的 DoH，避免主机名被引导解析劫持"
+        );
+        assert.equal(dns["prefer-h3"], false);
     });
 
     it("脚本控制字段优先级高于上游", () => {
