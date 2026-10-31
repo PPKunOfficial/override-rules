@@ -131,6 +131,55 @@ describe("buildRules", () => {
         assert.ok(steamFix < staticResources, "SteamFix 必须排在静态资源之前");
     });
 
+    it("流媒体站点按旧分组合并，不再单站成组", () => {
+        const rules = buildRules({ quicEnabled: true, hasTailscale: false });
+
+        // 亚洲流媒体
+        for (const site of [
+            "bahamut",
+            "abema",
+            "niconico",
+            "dmm",
+            "disney",
+            "primevideo",
+            "kakao",
+            "viu",
+            "hotstar",
+            "tvb",
+            "mytvsuper",
+        ]) {
+            assert.ok(
+                rules.includes(`GEOSITE,${site},${PROXY_GROUPS.ASIA_STREAMING}`),
+                `缺少 ${site} → 亚洲流媒体`
+            );
+        }
+
+        // 欧美流媒体
+        for (const site of ["youtube", "netflix", "twitch", "spotify"]) {
+            assert.ok(
+                rules.includes(`GEOSITE,${site},${PROXY_GROUPS.WESTERN_STREAMING}`),
+                `缺少 ${site} → 欧美流媒体`
+            );
+        }
+        assert.ok(rules.includes(`GEOIP,netflix,${PROXY_GROUPS.WESTERN_STREAMING},no-resolve`));
+
+        // 旧的单站分组不应再出现
+        for (const removed of ["Youtube", "Netflix", "Twitch", "Spotify", "巴哈姆特", "E-Hentai"]) {
+            assert.ok(
+                !rules.some((rule) => rule.endsWith(`,${removed}`)),
+                `不应再引用已移除的分组 ${removed}`
+            );
+        }
+    });
+
+    it("成人内容合并到「学习资料」组", () => {
+        const rules = buildRules({ quicEnabled: true, hasTailscale: false });
+
+        assert.ok(rules.includes(`GEOSITE,category-porn,${PROXY_GROUPS.R18}`));
+        assert.ok(rules.includes(`RULE-SET,EHentai,${PROXY_GROUPS.R18}`));
+        assert.equal(rules.filter((rule) => rule.endsWith(`,${PROXY_GROUPS.R18}`)).length, 2);
+    });
+
     it("所有引用的规则集均已注册", () => {
         const rules = buildRules({ quicEnabled: true, hasTailscale: true });
         for (const rule of rules) {

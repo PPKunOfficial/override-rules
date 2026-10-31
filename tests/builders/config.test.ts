@@ -250,7 +250,7 @@ describe("assembleConfig", () => {
         const allGroupNames = (result["proxy-groups"] ?? []).map((item) => item.name);
 
         assert.ok(!allGroupNames.includes("台湾节点"));
-        assert.deepEqual(group(result, PROXY_GROUPS.BAHAMUT)?.proxies, [
+        assert.deepEqual(group(result, PROXY_GROUPS.ASIA_STREAMING)?.proxies, [
             "台湾01",
             "台湾02",
             PROXY_GROUPS.RESIDENTIAL,
@@ -262,9 +262,11 @@ describe("assembleConfig", () => {
             "台湾02",
             PROXY_GROUPS.RESIDENTIAL,
         ]);
-        assert.ok(!group(result, PROXY_GROUPS.BAHAMUT)?.proxies?.includes("台湾节点"));
+        assert.ok(!group(result, PROXY_GROUPS.ASIA_STREAMING)?.proxies?.includes("台湾节点"));
         assert.ok(!group(result, PROXY_GROUPS.BILIBILI)?.proxies?.includes("台湾节点"));
-        assert.ok(!group(result, PROXY_GROUPS.BAHAMUT)?.proxies?.includes(PROXY_GROUPS.SELECT));
+        assert.ok(
+            !group(result, PROXY_GROUPS.ASIA_STREAMING)?.proxies?.includes(PROXY_GROUPS.SELECT)
+        );
         assert.ok(!group(result, PROXY_GROUPS.BILIBILI)?.proxies?.includes(PROXY_GROUPS.SELECT));
     });
 

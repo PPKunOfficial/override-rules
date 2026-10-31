@@ -98,6 +98,19 @@ export const serviceGroups: ServiceGroupDef[] = [
         proxies: (ctx) => ctx.lists.defaultProxies,
     },
     {
+        name: PROXY_GROUPS.ASIA_STREAMING,
+        icon: ICONS.asiaStreaming,
+        proxies: (ctx) =>
+            ctx.nodes.regionLayout.groupedCountries.includes(COUNTRY_KEYS.taiwan)
+                ? [
+                      countryGroupName(COUNTRY_KEYS.taiwan),
+                      PROXY_GROUPS.SELECT,
+                      PROXY_GROUPS.MANUAL,
+                      "DIRECT",
+                  ]
+                : ctx.lists.defaultProxies,
+    },
+    {
         name: PROXY_GROUPS.BILIBILI,
         icon: ICONS.bilibili,
         proxies: (ctx) => {
@@ -113,41 +126,13 @@ export const serviceGroups: ServiceGroupDef[] = [
         },
     },
     {
-        name: PROXY_GROUPS.BAHAMUT,
-        icon: ICONS.bahamut,
-        proxies: (ctx) =>
-            ctx.nodes.regionLayout.groupedCountries.includes(COUNTRY_KEYS.taiwan)
-                ? [
-                      countryGroupName(COUNTRY_KEYS.taiwan),
-                      PROXY_GROUPS.SELECT,
-                      PROXY_GROUPS.MANUAL,
-                      "DIRECT",
-                  ]
-                : ctx.lists.defaultProxies,
-    },
-    {
-        name: PROXY_GROUPS.YOUTUBE,
-        icon: ICONS.youtube,
-        proxies: (ctx) => ctx.lists.defaultProxies,
-    },
-    {
-        name: PROXY_GROUPS.TWITCH,
-        icon: ICONS.twitch,
-        proxies: (ctx) => ctx.lists.defaultProxies,
-    },
-    {
-        name: PROXY_GROUPS.NETFLIX,
-        icon: ICONS.netflix,
-        proxies: (ctx) => ctx.lists.defaultProxies,
-    },
-    {
         name: PROXY_GROUPS.TIKTOK,
         icon: ICONS.tiktok,
         proxies: (ctx) => ctx.lists.defaultProxies,
     },
     {
-        name: PROXY_GROUPS.SPOTIFY,
-        icon: ICONS.spotify,
+        name: PROXY_GROUPS.WESTERN_STREAMING,
+        icon: ICONS.westernStreaming,
         proxies: (ctx) => ctx.lists.defaultProxies,
     },
     {
@@ -179,8 +164,8 @@ export const serviceGroups: ServiceGroupDef[] = [
                 : ctx.lists.defaultProxies,
     },
     {
-        name: PROXY_GROUPS.EHENTAI,
-        icon: ICONS.ehentai,
+        name: PROXY_GROUPS.R18,
+        icon: ICONS.r18,
         proxies: (ctx) => ctx.lists.defaultProxies,
     },
     {
