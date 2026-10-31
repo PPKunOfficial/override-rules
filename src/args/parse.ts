@@ -3,6 +3,7 @@
  */
 
 import { parseProcessNames } from "../catalog/processes";
+import { parseTunExclude } from "../catalog/game-networks";
 import { parseBool, parseNumber } from "../utils/primitives";
 import { ARG_DEFAULTS } from "./schema";
 import type { FeatureFlags, GroupType, ScriptArgs } from "../types/args";
@@ -41,5 +42,6 @@ export function buildFeatureFlags(args: ScriptArgs): FeatureFlags {
         countryThreshold: parseNumber(args.threshold, ARG_DEFAULTS.countryThreshold),
         directProcesses: parseProcessNames(args.procdirect),
         proxyProcesses: parseProcessNames(args.procproxy),
+        tunExcludeAddresses: parseTunExclude(args.tunexclude),
     };
 }

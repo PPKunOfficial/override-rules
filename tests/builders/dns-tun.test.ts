@@ -157,6 +157,11 @@ describe("buildTunConfig", () => {
         assert.deepEqual(tun["route-exclude-address"], ["192.168.0.0/16"]);
     });
 
+    it("把 tunexclude 网段追加到排除列表且去重", () => {
+        const tun = buildTunConfig(true, true, ["162.249.72.0/21", "192.168.0.0/16"]);
+        assert.deepEqual(tun["route-exclude-address"], ["192.168.0.0/16", "162.249.72.0/21"]);
+    });
+
     it("保留设备名与 MTU", () => {
         const tun = buildTunConfig(false, false);
         assert.equal(tun.device, "mihomo");

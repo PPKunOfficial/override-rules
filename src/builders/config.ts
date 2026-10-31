@@ -67,7 +67,7 @@ export function assembleConfig(
             ipv6Enabled: flags.ipv6Enabled,
             upstreamDns: config.dns,
         }),
-        tun: buildTunConfig(flags.tunEnabled, nodes.hasTailscale),
+        tun: buildTunConfig(flags.tunEnabled, nodes.hasTailscale, flags.tunExcludeAddresses),
         // 存在 PROCESS-NAME 规则时必须开启进程查找（strict 只在有进程规则时才查，
         // 没有进程规则时开销可忽略）。
         "find-process-mode": "strict",

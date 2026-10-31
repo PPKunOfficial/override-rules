@@ -13,6 +13,7 @@
 * IP 规则默认添加 `no-resolve`，有效减少本地 DNS 解析，提升速度与隐私。
 * DNS 国内域名走阿里 / 腾讯加密 DoH、DoT，海外域名走经代理的海外加密 DNS（Cloudflare / Google / Quad9）；上游全部为 IP 直连端点、无明文解析，不使用系统或运营商下发解析器，并带污染检测兜底与 `geosite:cn` / `geolocation-!cn` 分区解析。
 * 动态覆写：自动识别节点国家/地区，仅生成实际存在的分组，节点名称实时枚举，配置更智能。
+* 游戏绕行：`procdirect` / `procproxy` 按进程点名直连或走代理；需要连内核都不经过时，用 `tunexclude=cs2,valorant` 把游戏的服务器网段整段排除出 TUN。
 * 按进程分流：`procdirect` / `procproxy` 参数把指定程序固定为直连或走代理，游戏、国服客户端之类不想过节点的程序可以单独拎出来。
 * 家宽选择：额外生成一个「家宽节点」组，直接列出全部节点由你手动挑选，需要固定住宅 IP 时选一次即可，不依赖节点命名规律。
 
@@ -56,6 +57,7 @@
 *   `threshold`：国家/地区节点数量小于该值时不显示分组（默认 2）；过滤后不足 2 个地区时自动展平，不再生成地区组
 *   `procdirect`：以逗号或竖线分隔的进程名（如 `GenshinImpact.exe|League of Legends.exe`），这些程序的流量一律直连、不经过任何节点（默认空）[^proc]
 *   `procproxy`：同样格式的进程名，一律走「选择代理」，用于被域名规则判成直连、但你想走代理的程序（默认空）[^proc]
+*   `tunexclude`：从 TUN 路由中排除的网段，支持预设名 `cs2`（Steam SDR 中继）、`valorant`（Riot AS6507 全部前缀）与自定义 CIDR 混写，如 `tunexclude=cs2,1.2.3.0/24`（默认空）[^tunexclude]
 
 > **向后兼容**：旧的 `loadbalance` 参数仍然可用。当 `grouptype` 未指定时，`loadbalance=true` 等价于 `grouptype=2`，`loadbalance=false` 等价于 `grouptype=1`。
 
@@ -67,6 +69,8 @@
 说明：支持字符串 true/false 或 1/0；。注：预生成的 YAML 格式覆写（`yamls/` 目录）固定使用正则模式，不受此参数影响。
 
 [^proc]: 进程名就是任务管理器里的映像名（一般带 `.exe`），必须与内核看到的名称一致；`PROCESS-NAME` 规则依赖进程查找，本项目已在配置里固定 `find-process-mode: strict`（只在存在进程规则时才查，无进程规则时没有额外开销）。注意 TUN 模式下这些程序的流量仍然要经过内核转发，`DIRECT` 只是不出节点；想让程序完全不碰内核属于系统层排除，Clash 系客户端没有按进程绕过 TUN 的开关。
+
+[^tunexclude]: 只有 TUN 模式才有意义。被排除的网段不经过内核，是真正意义上的「绕过 Clash」，而不只是走 `DIRECT`；代价是对应服务（Steam 中继、Riot 登录/商店）也一并直连。mihomo 在 Windows 上没有按进程排除 TUN 的能力，只能按目的地网段排除；如果只是不想让游戏过节点，用 `procdirect` 更省事。网段会随游戏更新变化，可用 `node scripts/game-networks.mjs` 重新抓取。
 
 [^fn2]: 无特殊需求不要启用，否则会造成[移动设备异常耗电问题](https://github.com/vernesong/OpenClash/issues/2614)。
 

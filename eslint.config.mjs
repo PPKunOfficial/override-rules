@@ -29,6 +29,11 @@ export default [
                 process: "readonly",
                 console: "readonly",
                 Buffer: "readonly",
+                fetch: "readonly",
+                AbortSignal: "readonly",
+                URL: "readonly",
+                setTimeout: "readonly",
+                clearTimeout: "readonly",
                 // SubStore / Clash 脚本环境全局变量
                 $arguments: "readonly",
                 $network: "readonly",

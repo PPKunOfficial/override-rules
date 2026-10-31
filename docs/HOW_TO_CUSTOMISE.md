@@ -103,6 +103,37 @@ export const countriesMeta: Record<string, CountryMeta> = {
 };
 ```
 
+## TUN 下让游戏完全绕开（tunexclude）
+
+`procdirect` 只是让游戏走 `DIRECT`，流量仍然经过内核。要让 CS2、Valorant 这类游戏完全不碰 Clash，就得把它们的服务器网段从 TUN 路由里排除：
+
+```text
+...convert.js#tun=true&tunexclude=cs2,valorant
+```
+
+*   `cs2`：Steam 官方 SDR 配置里 CS2 的全部中继地址，按 /24 聚合后 34 条。
+*   `valorant`：Riot Games（AS6507）的全部 IPv4 前缀，聚合后 15 条。
+*   也可以混写自定义网段：`tunexclude=cs2|1.2.3.0/24|8.8.8.8`（裸 IP 会补成 `/32`），写错的条目直接丢弃，不会让配置生成失败。
+
+原理与限制：mihomo 只在 Linux / Android 上能按进程（uid / 包名）挂钩 TUN，Windows 与 macOS 只能按目的地网段排除，所以这里是「整段网段不走 TUN」，不是「按进程不走 TUN」。被排除的网段内核看都看不到，属于真正的绕过。
+
+代价也要说清楚：排除 Steam 中继段之后，CS2 的连接不再经过节点，同时对局质量完全取决于你到中继的直连质量；排除 Riot 网段后，Valorant 的登录与商店也走直连。如果某个地区直连不通，把对应预设去掉即可。
+
+网段数据会随游戏版本变化，仓库里的列表来自：
+
+*   `https://api.steampowered.com/ISteamApps/GetSDRConfig/v1/?appid=730`（CS2 中继）
+*   `https://stat.ripe.net/data/announced-prefixes/data.json?resource=AS6507`（Riot 前缀）
+
+刷新方式（Node 24+ 可用 `NODE_USE_ENV_PROXY=1` 让内置 fetch 走环境变量代理）：
+
+```bash
+NODE_USE_ENV_PROXY=1 HTTPS_PROXY=http://127.0.0.1:7897 node scripts/game-networks.mjs
+```
+
+把输出贴回 `src/catalog/game-networks.ts` 即可。
+
+> 另一个更省事的做法：不用 TUN、改用系统代理模式。游戏不会读系统代理，天然就不经过 Clash，浏览器等程序照旧走代理——只是没法兼顾「系统级全局代理」。
+
 ## 按进程分流（让游戏直连）
 
 游戏、国服客户端、局域网工具经常不适合过节点：要么走代理反而更高延迟，要么匹配到境外 CDN 拿到错误的分区。可以在订阅链接后面加进程名参数，把它们从规则体系里单独拎出来：

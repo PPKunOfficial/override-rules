@@ -16,6 +16,7 @@ export interface ScriptArgs {
     tun?: string;
     procdirect?: string;
     procproxy?: string;
+    tunexclude?: string;
 }
 
 /** 地区代理组类型：0=select（手动选择），1=url-test（自动测速），2=load-balance（负载均衡）。 */
@@ -36,4 +37,6 @@ export interface FeatureFlags {
     directProcesses: string[];
     /** 这些进程的流量一律走「选择代理」，用于反被规则判成直连的程序。 */
     proxyProcesses: string[];
+    /** 从 TUN 路由中排除的网段（游戏服务器等需要完全绕开内核的流量）。 */
+    tunExcludeAddresses: string[];
 }
