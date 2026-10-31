@@ -68,7 +68,7 @@
 
 说明：支持字符串 true/false 或 1/0；。注：预生成的 YAML 格式覆写（`yamls/` 目录）固定使用正则模式，不受此参数影响。
 
-[^proc]: 纯文件名（`GenshinImpact.exe`）生成 `PROCESS-NAME` 规则，带目录分隔符的完整路径（`D:\Games\VALORANT\VALORANT.exe`）生成 `PROCESS-PATH` 规则——同名进程有好几个时用路径才能精确点名。路径要用内核看到的真实绝对路径（任务管理器 → 右键 → 打开文件所在位置 → 复制路径），**大小写敏感**，正斜杠会自动规范成反斜杠。进程规则依赖进程查找，本项目已在配置里固定 `find-process-mode: strict`（只在存在进程规则时才查，无进程规则时没有额外开销）。TCP 与 UDP 都会查连接归属进程，但 UDP 的归属识别不如 TCP 稳定，游戏这类 UDP 为主的目标建议同时用 `tunexclude` 兜底。注意 TUN 模式下这些程序的流量仍然要经过内核转发，`DIRECT` 只是不出节点；想让程序完全不碰内核只能按目的地网段排除（`tunexclude`）。
+[^proc]: 纯文件名（`GenshinImpact.exe`）生成 `PROCESS-NAME` 规则，带目录分隔符的完整路径（`D:\Games\VALORANT\VALORANT.exe`）生成 `PROCESS-PATH` 规则——同名进程有好几个时用路径才能精确点名。路径要用内核看到的真实绝对路径（任务管理器 → 右键 → 打开文件所在位置 → 复制路径），**大小写敏感**，正斜杠会自动规范成反斜杠。进程规则依赖进程查找，本项目已在配置里固定 `find-process-mode: strict`（只在存在进程规则时才查，无进程规则时没有额外开销）。TCP 与 UDP 都查连接归属进程：实测 Windows 下游戏这类 UDP 流量同样命中（日志 `[UDP] ... (cs2.exe) --> ... match ProcessName(cs2.exe)`），所以 `procdirect=cs2.exe` 足以让游戏整体直连、不再出现「服务器在境内却绕去香港节点」的反向优化。注意 TUN 模式下这些程序的流量仍然要经过内核转发，`DIRECT` 只是不出节点；想让程序完全不碰内核只能按目的地网段排除（`tunexclude`）。
 
 [^tunexclude]: 只有 TUN 模式才有意义。被排除的网段不经过内核，是真正意义上的「绕过 Clash」，而不只是走 `DIRECT`；代价是对应服务（Steam 中继、Riot 登录/商店）也一并直连。mihomo 在 Windows 上没有按进程排除 TUN 的能力，只能按目的地网段排除；如果只是不想让游戏过节点，用 `procdirect` 更省事。网段会随游戏更新变化，可用 `node scripts/game-networks.mjs` 重新抓取。
 
@@ -103,6 +103,17 @@ https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/preview/c
 **Play 商店修复**：国行设备通过 `services.googleapis.cn` 获取 Google Play 服务。该域名由 `GEOSITE,google` 分流至「谷歌服务」代理组；而应用下载实际落在 `xn--ngstr-lra8j.com` 的大陆 CDN 节点（北京 `2x3`、上海 `ni5`、广州 `j5o`）上，本覆写规则额外用一条 `DOMAIN-REGEX` 把这些节点直连，避免下载「等待中…」或因绕路代理而龟速。详见：[「Google Play 商店的国内 CDN：从密码学入门到分流策略优化」](https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/)。
 
 ~~**Steam 修复**：~~ 用于让 Steam 客户端调用国内 CDN 及 P2P 网络下载，节省大量流量，已经是默认行为。
+
+### 关于游戏直连的说明
+
+国服游戏（CS2、无畏契约、原神等）服务器都在境内，被规则送去境外节点只会反向优化——延迟高、丢包、还容易被判定为异常登录。用 `procdirect` 按进程点名即可让整个程序直连，规则插在最前面，命中后既不查域名规则也不出节点：
+
+```text
+# CS2（国服/国际服同一进程名）与无畏契约直连
+https://cdn.jsdelivr.net/gh/PPKunOfficial/override-rules/convert.min.js#grouptype=1&procdirect=cs2.exe|VALORANT-Win64-Shipping.exe
+```
+
+对局流量是 UDP，`PROCESS-NAME` 同样生效（Windows 实测日志 `[UDP] ... (cs2.exe) --> ... match ProcessName(cs2.exe)`），不需要手工填服务器网段。如果还想让流量连内核都不经过（连转发开销都不要），再用 `tunexclude` 把对应网段排除出 TUN。
 
 ### 关于链式代理的说明
 

@@ -162,7 +162,7 @@ NODE_USE_ENV_PROXY=1 HTTPS_PROXY=http://127.0.0.1:7897 node scripts/game-network
 
 实现上这两个参数会在规则数组最前面插入 `PROCESS-NAME,<进程名>,<目标>` 或 `PROCESS-PATH,<路径>,<目标>`，排在广告拦截与域名规则之前——一旦命中就完全绕开后续规则，所以不用担心某个程序先被别的规则接走。进程查找由配置里的 `find-process-mode: strict` 打开，没有进程规则时内核不会额外查进程。
 
-> TCP 与 UDP 都会查连接归属进程，但 UDP 的归属识别不如 TCP 稳定：跨国服游戏这种 UDP 为主、又必须完全不进内核的场景，用 `tunexclude` 按目的地网段排除更可靠。
+> TCP 与 UDP 都会查连接归属进程，Windows 下实测均可用（`[UDP] ... (cs2.exe) --> ... match ProcessName(cs2.exe)`），所以 `procdirect=cs2.exe` 能覆盖游戏的对局流量，不必额外填服务器网段。只有在确实想让流量完全不进内核（连转发都不要）时才需要 `tunexclude`。
 
 > TUN 模式下「直连」只表示不走节点，数据仍然经过内核转发。要让某个程序完全不经过 Clash，只能靠目的地网段排除（`tunexclude`）或干脆不用 TUN，Clash 系客户端没有按进程绕过 TUN 的开关。
 
