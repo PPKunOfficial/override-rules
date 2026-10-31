@@ -15,6 +15,19 @@ export interface BuildRulesInput {
 }
 
 /**
+ * Google Play 在中国大陆的 CDN 节点域名特征。
+ *
+ * 国行设备通过 `services.googleapis.cn` 获取应用，实际下载走 Ångström 域名
+ * `xn--ngstr-lra8j.com`，主机名形如 `rr1---sn-j5o76n7z.xn--ngstr-lra8j.com`。
+ * `sn-` 后三位是机场所在地 IATA 码的替换密码，已知大陆节点落在
+ * 北京（`2x3`）、上海（`ni5`）、广州（`j5o`），直连可获得最佳下载速度。
+ *
+ * @see https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/
+ */
+export const GOOGLE_PLAY_CN_HOST_REGEX =
+    "^r+[0-9]+(---|\\.)sn-(2x3|ni5|j5o)\\w{5}\\.xn--ngstr-lra8j\\.com$";
+
+/**
  * 构建最终的规则列表。
  * @param input.quicEnabled - 是否允许 QUIC（未启用时插入 UDP:443 拦截规则）
  * @param input.hasTailscale - 是否存在 Tailscale 节点（决定是否生成 Tailscale 分流规则）
@@ -55,6 +68,7 @@ export function buildRules({ quicEnabled, hasTailscale }: BuildRulesInput): stri
         ruleSet("TikTok", PROXY_GROUPS.TIKTOK),
         ruleSet("SteamFix", "DIRECT"),
         ruleSet("GoogleFCM", "DIRECT"),
+        `DOMAIN-REGEX,${GOOGLE_PLAY_CN_HOST_REGEX},DIRECT`,
         `GEOSITE,google-play@cn,DIRECT`,
         `GEOSITE,microsoft@cn,DIRECT`,
         `GEOSITE,apple,${PROXY_GROUPS.APPLE}`,

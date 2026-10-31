@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { buildRules } from "../../src/builders/rules";
+import { buildRules, GOOGLE_PLAY_CN_HOST_REGEX } from "../../src/builders/rules";
 import { PROXY_GROUPS } from "../../src/catalog/group-names";
 import { ruleSets } from "../../src/catalog/rule-sets";
 
@@ -55,5 +55,33 @@ describe("buildRules", () => {
     it("以 MATCH 收尾", () => {
         const rules = buildRules({ quicEnabled: true, hasTailscale: false });
         assert.equal(rules.at(-1), "MATCH,Final");
+    });
+
+    it("Google Play 国内 CDN 节点直连，且优先于 Google 代理规则", () => {
+        const rules = buildRules({ quicEnabled: true, hasTailscale: false });
+        const regexRule = rules.find((rule) => rule.startsWith("DOMAIN-REGEX,"));
+        assert.ok(regexRule, "缺少 Google Play 国内 CDN 正则规则");
+        assert.equal(regexRule, `DOMAIN-REGEX,${GOOGLE_PLAY_CN_HOST_REGEX},DIRECT`);
+
+        const googleProxyIndex = rules.indexOf(`GEOSITE,google,${PROXY_GROUPS.GOOGLE}`);
+        assert.ok(
+            rules.indexOf(regexRule) < googleProxyIndex,
+            "正则规则必须排在 Google 代理规则之前"
+        );
+    });
+
+    it("Google Play 国内 CDN 正则只匹配大陆节点", () => {
+        const pattern = new RegExp(GOOGLE_PLAY_CN_HOST_REGEX);
+
+        // 北京(2x3)、上海(ni5)、广州(j5o)，`---` 与 `.` 两种连接符
+        assert.ok(pattern.test("rr1---sn-j5o76n7z.xn--ngstr-lra8j.com"));
+        assert.ok(pattern.test("rr4---sn-j5o7dn7s.xn--ngstr-lra8j.com"));
+        assert.ok(pattern.test("rr1.sn-2x3ab123.xn--ngstr-lra8j.com"));
+        assert.ok(pattern.test("rr5.sn-ni5zzz99.xn--ngstr-lra8j.com"));
+
+        // 境外节点（a5m）与同类但非 Ångström 域名不应命中
+        assert.ok(!pattern.test("rr1---sn-a5mekn7r.xn--ngstr-lra8j.com"));
+        assert.ok(!pattern.test("rr1---sn-j5o76n7z.googlevideo.com"));
+        assert.ok(!pattern.test("rr1---sn-j5o76n7z.xn--ngstr-lra8j.com.evil.test"));
     });
 });

@@ -7,7 +7,7 @@
 本仓库为 Mihomo/Substore 设计，提供高效、灵活的覆写规则（**不建议用于 Stash**）。核心特色如下：
 
 * 集成 [SukkaW/Surge](https://github.com/SukkaW/Surge) 与 [217heidai/adblockfilters](https://github.com/217heidai/adblockfilters) 等优质规则，兼容性强，覆盖面广。
-* 针对 Truth Social、E-Hentai、TikTok、ZCode（Z.ai 编程客户端）、加密货币等场景，新增专用分流规则，满足多样化需求。
+* 针对 Truth Social、E-Hentai、TikTok、ZCode（Z.ai 编程客户端）、Google Play 大陆 CDN、加密货币等场景，新增专用分流规则，满足多样化需求。
 * 精简冗余，结构清晰，维护便捷。
 * 深度融合 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat) GeoSite/GeoIP，分流更精准。
 * IP 规则默认添加 `no-resolve`，有效减少本地 DNS 解析，提升速度与隐私。
@@ -89,7 +89,7 @@ https://raw.githubusercontent.com/powerfullz/override-rules/refs/heads/preview/c
 
 **搜狗输入**：默认放行，作用是避免搜狗输入法将你输入的每一个字符自动收集并通过`get.sogou.com/q`等域名回传。隐私担忧者可以将其设置为`REJECT`，开启后会影响搜狗输入法账号同步、词库更新、问题反馈，但语音输入等其他功能可以正常使用。
 
-~~**Play 商店修复**：~~ 修复国行设备因使用`services.googleapis.cn`域名导致的 Google Play 下载应用时的「等待中…」问题。详见：[「Google Play 商店的国内 CDN：从密码学入门到分流策略优化」](https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/)，已经是默认行为。
+**Play 商店修复**：国行设备通过 `services.googleapis.cn` 获取 Google Play 服务。该域名由 `GEOSITE,google` 分流至「谷歌服务」代理组；而应用下载实际落在 `xn--ngstr-lra8j.com` 的大陆 CDN 节点（北京 `2x3`、上海 `ni5`、广州 `j5o`）上，本覆写规则额外用一条 `DOMAIN-REGEX` 把这些节点直连，避免下载「等待中…」或因绕路代理而龟速。详见：[「Google Play 商店的国内 CDN：从密码学入门到分流策略优化」](https://blog.l3zc.com/2025/03/chinese-cdn-used-by-playstore/)。
 
 ~~**Steam 修复**：~~ 用于让 Steam 客户端调用国内 CDN 及 P2P 网络下载，节省大量流量，已经是默认行为。
 
