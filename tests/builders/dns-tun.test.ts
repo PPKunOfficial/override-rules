@@ -33,8 +33,62 @@ describe("buildDns", () => {
                 "fake-ip-filter": ["+.example.org"],
             },
         });
-        assert.deepEqual(dns["nameserver-policy"], { "geosite:cn": ["223.5.5.5"] });
+        // 同名 key 由上游覆盖，脚本自带的分区策略继续保留
+        assert.deepEqual(dns["nameserver-policy"]?.["geosite:cn"], ["223.5.5.5"]);
+        assert.equal(
+            dns["nameserver-policy"]?.["geosite:private"],
+            undefined,
+            "私网域名不额外分区，交给默认上游"
+        );
         assert.ok(dns["fake-ip-filter"]?.includes("+.example.org"));
+    });
+
+    it("国内解析不使用系统解析器与 114 DNS", () => {
+        const dns = buildDns({ fakeIPEnabled: true, ipv6Enabled: false });
+        const domestic = [...dns.nameserver, ...(dns["default-nameserver"] ?? [])];
+
+        assert.ok(!domestic.includes("system"), "不应依赖系统/运营商下发的解析器");
+        assert.ok(
+            domestic.every((server) => !server.includes("114.")),
+            "国内上游不应使用 114 DNS"
+        );
+    });
+
+    it("国内上游加密优先，明文只作兜底", () => {
+        const dns = buildDns({ fakeIPEnabled: false, ipv6Enabled: false });
+
+        assert.ok(dns.nameserver[0].startsWith("https://"), "首选上游应为 DoH");
+        assert.ok(
+            dns.nameserver.some((server) => server.startsWith("tls://")),
+            "缺少 DoT 上游"
+        );
+        assert.ok(
+            dns.nameserver.slice(0, -1).every((server) => /^(https|tls):\/\//.test(server)),
+            "除最后一项兜底外，国内上游应全部加密"
+        );
+        assert.deepEqual(dns["default-nameserver"], ["223.5.5.5", "119.29.29.29", "180.184.1.1"]);
+    });
+
+    it("代理服务端域名走独立加密解析", () => {
+        const dns = buildDns({ fakeIPEnabled: true, ipv6Enabled: false });
+        const proxyDns = dns["proxy-server-nameserver"] ?? [];
+
+        assert.ok(proxyDns.length > 0);
+        assert.ok(proxyDns.every((server) => server.startsWith("https://")));
+    });
+
+    it("国内域名分区解析，海外域名仅在污染时兜底", () => {
+        const dns = buildDns({ fakeIPEnabled: true, ipv6Enabled: false });
+        const policy = dns["nameserver-policy"] ?? {};
+
+        assert.deepEqual(policy["geosite:cn"], dns.nameserver);
+        assert.deepEqual(Object.keys(policy), ["geosite:cn"]);
+        assert.deepEqual(dns["fallback-filter"], {
+            geoip: true,
+            "geoip-code": "CN",
+            ipcidr: ["240.0.0.0/4", "0.0.0.0/32"],
+        });
+        assert.ok(dns.fallback.every((server) => !server.includes("114.")));
     });
 
     it("脚本控制字段优先级高于上游", () => {

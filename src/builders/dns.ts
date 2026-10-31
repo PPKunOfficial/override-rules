@@ -99,6 +99,53 @@ const FAKE_IP_FILTER = [
 /** 支持从上游配置继承的 DNS Policy 字段。 */
 const DNS_POLICY_FIELDS = ["nameserver-policy", "proxy-server-nameserver-policy"] as const;
 
+/**
+ * 国内域名的主解析上游。
+ *
+ * 全部走加密 DNS，避免运营商（常见的 `114.114.114.114`、光猫/路由器下发的 DNS）
+ * 明文抢答与投毒：阿里 DoH 打头，腾讯 DNSPod 的 DoH/DoT 紧随其后，
+ * 火山引擎的明文 UDP 仅作低延迟兜底，断网重连时也能先用上。
+ */
+const DOMESTIC_DNS_SERVERS = [
+    "https://dns.alidns.com/dns-query",
+    "https://doh.pub/dns-query",
+    "tls://dot.pub",
+    "180.184.1.1",
+];
+
+/**
+ * 引导 DoH/DoT 域名解析的明文服务器。
+ *
+ * `dns.alidns.com`、`doh.pub` 这些主机名本身需要先被解析，
+ * 否则加密上游在冷启动时会互相依赖。这里固定用 IP，不走 `system`，
+ * 以免把系统/运营商下发的 DNS 重新拉回解析链路。
+ */
+const DOMESTIC_BOOTSTRAP_DNS = ["223.5.5.5", "119.29.29.29", "180.184.1.1"];
+
+/** 代理服务端域名专用解析上游：同样只用加密 DNS，且不经过代理自身。 */
+const PROXY_SERVER_DNS = ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query"];
+
+/**
+ * 海外域名的兜底上游。
+ *
+ * 仅在 `fallback-filter` 判定主上游返回了被污染的结果（国内 IP、保留地址段）时启用，
+ * 因此这些经常被干扰的海外解析器不会影响日常国内解析速度。
+ */
+const FOREIGN_DNS_SERVERS = [
+    "quic://dns0.eu",
+    "https://dns.cloudflare.com/dns-query",
+    "https://dns.sb/dns-query",
+    "tcp://208.67.222.222",
+    "tcp://8.26.56.2",
+];
+
+/** 判断 DNS 上游返回的地址是否已被污染，需要走海外兜底。 */
+const FALLBACK_FILTER = {
+    geoip: true,
+    "geoip-code": "CN",
+    ipcidr: ["240.0.0.0/4", "0.0.0.0/32"],
+};
+
 /** 判断值是否为非数组对象。 */
 function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -167,15 +214,16 @@ function buildDnsConfig({ mode, ipv6Enabled, fakeIpFilter }: BuildDnsConfigInput
         enable: true,
         ipv6: ipv6Enabled,
         "prefer-h3": true,
+        "cache-algorithm": "arc",
         "enhanced-mode": mode,
-        nameserver: ["system", "223.5.5.5", "119.29.29.29", "180.184.1.1"],
-        fallback: [
-            "quic://dns0.eu",
-            "https://dns.cloudflare.com/dns-query",
-            "https://dns.sb/dns-query",
-            "tcp://208.67.222.222",
-            "tcp://8.26.56.2",
-        ],
+        "default-nameserver": DOMESTIC_BOOTSTRAP_DNS,
+        nameserver: DOMESTIC_DNS_SERVERS,
+        "proxy-server-nameserver": PROXY_SERVER_DNS,
+        "nameserver-policy": {
+            "geosite:cn": [...DOMESTIC_DNS_SERVERS],
+        },
+        fallback: FOREIGN_DNS_SERVERS,
+        "fallback-filter": FALLBACK_FILTER,
     };
 
     if (fakeIpFilter) {

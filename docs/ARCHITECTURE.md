@@ -165,6 +165,23 @@ flowchart TD
 
 这样既能维持脚本的统一 DNS 行为，也能保留订阅提供方针对特定域名的策略。
 
+### DNS 解析策略
+
+`src/builders/dns.ts` 内置一套「国内加密解析 + 海外污染兜底」的默认值，不依赖系统（运营商下发）解析器：
+
+| 字段 | 内容 | 作用 |
+| --- | --- | --- |
+| `default-nameserver` | `223.5.5.5`、`119.29.29.29`、`180.184.1.1` | 仅用于引导解析其他 DNS 服务商域名 |
+| `nameserver` | `https://dns.alidns.com/dns-query`、`https://doh.pub/dns-query`、`tls://dot.pub`、`180.184.1.1` | 国内上游，加密优先，末位保留一个明文兜底 |
+| `proxy-server-nameserver` | 阿里 / 腾讯 DoH | 解析 `server` 域名，避免「解析代理域名又需要代理」的死循环 |
+| `nameserver-policy: geosite:cn` | 与 `nameserver` 相同 | 国内域名显式分区，保证命中国内加密上游 |
+| `fallback` | `quic://dns0.eu`、`dns.cloudflare.com`、`dns.sb`、`tcp://208.67.222.222`、`tcp://8.26.56.2` | 仅在判定被污染时启用 |
+| `fallback-filter` | `geoip: true` + `geoip-code: CN` + `ipcidr: 240.0.0.0/4, 0.0.0.0/32` | 海外域名返回国内地址或保留地址时视为污染，强制走 `fallback` |
+
+默认用 `fake-ip`，被代理的域名不会以污染结果落地——本地只回 `198.18.0.0/16` 的假地址，真实解析交给代理端完成，因此不额外配置 `fallback-filter.domain`（海外 `fallback` 在大陆直连普遍不可达，强推反而更糟）。
+
+上游订阅的 `nameserver-policy` 会被合并进来，与脚本默认的 `geosite:cn` 分区并存。
+
 ### YAML Generator 的参数
 
 静态 YAML 配置文件通过 `scripts/yaml_generator/generator.ts` 穷举参数组合生成：
