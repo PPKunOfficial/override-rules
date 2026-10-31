@@ -80,6 +80,38 @@ function buildTailGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
     ];
 }
 
+/**
+ * 「家宽节点」代理组。
+ *
+ * 机场对住宅线路的命名五花八门，用正则自动识别既容易漏、也容易把机房节点误判进来，
+ * 因此这里不做匹配：直接把全部节点放进同一个选择组，由用户自己挑需要固定住宅 IP 的那条。
+ */
+function buildResidentialGroup(
+    ctx: GroupBuildContext,
+    tailscaleExcludeFilter: string | undefined
+): Array<ProxyGroup | null> {
+    const { flags, nodes } = ctx;
+    // `manualNames` 已经是「全部节点，排除 Tailscale」，与配置里的节点顺序一致。
+    const nodeNames = nodes.manualNames;
+    if (nodeNames.length === 0) return [];
+
+    return [
+        buildGroupByType({
+            name: PROXY_GROUPS.RESIDENTIAL,
+            icon: ICONS.residential,
+            groupType: flags.groupType,
+            nodeSource: flags.regexFilter
+                ? {
+                      "include-all": true as const,
+                      ...(tailscaleExcludeFilter
+                          ? { "exclude-filter": tailscaleExcludeFilter }
+                          : {}),
+                  }
+                : { proxies: nodeNames },
+        }),
+    ];
+}
+
 /** 低倍率组与各地区组。 */
 function buildRegionGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
     const { flags, nodes } = ctx;
@@ -124,7 +156,7 @@ function buildRegionGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
         });
     });
 
-    return [lowCostGroup, ...countryGroups];
+    return [lowCostGroup, ...countryGroups, ...buildResidentialGroup(ctx, tailscaleExcludeFilter)];
 }
 
 /**

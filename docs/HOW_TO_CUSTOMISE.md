@@ -103,6 +103,12 @@ export const countriesMeta: Record<string, CountryMeta> = {
 };
 ```
 
+## 家宽节点组
+
+「家宽节点」组不做名称匹配，直接把全部节点列出来，由你在面板里手动挑选住宅线路，选一次就固定住。它的内容与「手动选择」一致；展平模式下（地区数不足阈值、不生成地区组）它依然存在，用于直接选节点。
+
+如果想让它按自己的命名习惯自动筛选，在 `src/builders/proxy-groups.ts` 的 `buildResidentialGroup()` 里给 `nodeSource` 加 `filter` 即可，例如 `filter: "家宽|住宅"`。
+
 ## 自定义分流规则 (`rule-providers`和`rules`)
 
 若需要添加新的 Rule Provider（例如引入其他 GitHub 仓库或第三方链接的规则集），请在 `src/catalog/rule-sets.ts` 中配置：

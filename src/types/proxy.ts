@@ -117,6 +117,8 @@ export interface BuildBaseListsInput {
     landing: boolean;
     landingNodes: ProxyNode[];
     lowCostNodes: ProxyNode[];
+    /** 是否生成「家宽节点」组（全节点选择组）。 */
+    hasResidentialPicker: boolean;
     nonLandingNodes: ProxyNode[];
     tailscaleNodes: ProxyNode[];
     regexFilter: boolean;

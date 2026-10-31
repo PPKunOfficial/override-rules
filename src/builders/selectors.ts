@@ -48,6 +48,7 @@ export function buildBaseLists({
     landing,
     landingNodes,
     lowCostNodes,
+    hasResidentialPicker,
     nonLandingNodes,
     tailscaleNodes,
     regexFilter,
@@ -72,6 +73,7 @@ export function buildBaseLists({
               landing && PROXY_GROUPS.LANDING,
               flattenedNodeSource,
               hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL,
               "DIRECT"
           )
         : buildList<ProxyGroupCandidate>(
@@ -80,6 +82,7 @@ export function buildBaseLists({
               landing && PROXY_GROUPS.LANDING,
               suffixedCountryNames,
               hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL,
               PROXY_GROUPS.MANUAL,
               "DIRECT"
           );
@@ -91,6 +94,7 @@ export function buildBaseLists({
               landing && PROXY_GROUPS.LANDING,
               flattenedNodeSource,
               hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL,
               "DIRECT"
           )
         : buildList(
@@ -98,6 +102,7 @@ export function buildBaseLists({
               landing && PROXY_GROUPS.LANDING,
               suffixedCountryNames,
               hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL,
               PROXY_GROUPS.MANUAL,
               "DIRECT"
           );
@@ -107,13 +112,15 @@ export function buildBaseLists({
               "DIRECT",
               landing && PROXY_GROUPS.LANDING,
               flattenedNodeSource,
-              hasLowCost && PROXY_GROUPS.LOW_COST
+              hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL
           )
         : buildList(
               "DIRECT",
               landing && PROXY_GROUPS.LANDING,
               suffixedCountryNames,
               hasLowCost && PROXY_GROUPS.LOW_COST,
+              hasResidentialPicker && PROXY_GROUPS.RESIDENTIAL,
               PROXY_GROUPS.SELECT,
               PROXY_GROUPS.MANUAL
           );

@@ -10,6 +10,7 @@ function buildInput(overrides: Partial<BuildBaseListsInput> = {}): BuildBaseList
         landing: false,
         landingNodes: [],
         lowCostNodes: [],
+        hasResidentialPicker: false,
         nonLandingNodes: [],
         tailscaleNodes: [],
         regexFilter: false,

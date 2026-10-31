@@ -54,6 +54,7 @@ function main(config: ClashConfig): ClashConfig {
         landing: nodes.landing,
         landingNodes: nodes.landingNodes,
         lowCostNodes: nodes.lowCostNodes,
+        hasResidentialPicker: nodes.manualNames.length > 0,
         nonLandingNodes: nodes.nonLandingNodes,
         tailscaleNodes: nodes.tailscaleNodes,
         regexFilter: flags.regexFilter,

@@ -79,7 +79,7 @@ flowchart TD
 | `src/analysis/active-countries.ts` | 地区阈值过滤与权重排序 | `getActiveCountryNames()` |
 | `src/domain/proxy-group.ts` | 代理组构造工厂（字段顺序与空候选兜底集中管理） | `buildGroupByType()`, `selectGroup()`, `urlTestGroup()`, `fallbackGroup()` |
 | `src/builders/selectors.ts` | 各策略组的基础候选列表 | `buildBaseLists()` |
-| `src/builders/proxy-groups.ts` | 代理组组装（前置/服务/尾部/地区） | `buildProxyGroups()` |
+| `src/builders/proxy-groups.ts` | 代理组组装（前置/服务/尾部/地区/家宽选择） | `buildProxyGroups()` |
 | `src/builders/rules.ts` | 路由规则构建 | `buildRules()` |
 | `src/builders/rule-set` 引用 | 规则集名称受 `RuleSetKey` 约束，改名可编译期报错 | — |
 | `src/builders/dns.ts` | DNS 配置、fake-ip 过滤与上游字段继承 | `buildDns()` |
@@ -126,6 +126,8 @@ flowchart TD
 这些分类维度相互独立，构建阶段通过组合它们来生成完整的代理组树。
 
 分类结果还会派生 `regionLayout`：通过 `threshold` 的地区数 ≥ 2 时为 `grouped`，为每个地区生成 `${地区}节点` 组，并保留「手动选择」组；不足 2 个时为 `flattened`，不生成任何地区组，`选择代理`、`自动选择`、`故障转移` 直接引用非落地节点（不含 Tailscale），同时不再生成与 `选择代理` 高度重合的「手动选择」组。服务组同样按 `regionLayout.groupedCountries` 判断目标地区组是否存在，避免引用已展平的地区组；展平模式下服务组的 `defaultProxies` / `defaultProxiesDirect` 也不再引用 `选择代理`，而是直接携带同一份展平节点来源。若存在「低倍率节点」组，「静态资源」组会将其置于候选首位，其余候选保持正常顺序。
+
+「家宽节点」组挂在地区组之后：它不做任何名称匹配，直接列出全部节点（`manualNames`，已排除 Tailscale），由用户自己挑需要固定住宅 IP 的那条 —— 机场对住宅线路的命名没有统一规律，正则自动识别既容易漏也容易把机房节点误判进来。`regex=true` 时该组用 `include-all` + 仅排除 Tailscale 的 `exclude-filter`，与「手动选择」等价；没有节点时不生成。
 
 ### Tailscale 集成
 

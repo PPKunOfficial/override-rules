@@ -20,6 +20,7 @@ function run(args: ScriptArgs, config: ClashConfig): ClashConfig {
         landing: nodes.landing,
         landingNodes: nodes.landingNodes,
         lowCostNodes: nodes.lowCostNodes,
+        hasResidentialPicker: nodes.manualNames.length > 0,
         nonLandingNodes: nodes.nonLandingNodes,
         tailscaleNodes: nodes.tailscaleNodes,
         regexFilter: flags.regexFilter,
@@ -79,22 +80,34 @@ describe("assembleConfig", () => {
         const result = run({}, { proxies: [{ name: "NodeA" }, { name: "NodeB" }] });
 
         // 展平后没有 AUTO / FALLBACK 的相互嵌套，也不再生成「手动选择」组。
-        assert.deepEqual(group(result, PROXY_GROUPS.SELECT)?.proxies, ["NodeA", "NodeB", "DIRECT"]);
+        assert.deepEqual(group(result, PROXY_GROUPS.SELECT)?.proxies, [
+            "NodeA",
+            "NodeB",
+            PROXY_GROUPS.RESIDENTIAL,
+            "DIRECT",
+        ]);
         assert.deepEqual(group(result, PROXY_GROUPS.AUTO)?.proxies, ["NodeA", "NodeB"]);
         assert.deepEqual(group(result, PROXY_GROUPS.FALLBACK)?.proxies, ["NodeA", "NodeB"]);
         assert.equal(group(result, PROXY_GROUPS.MANUAL), undefined);
 
         // 服务组也直接使用展平节点，不再引用「选择代理」。
-        assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, ["NodeA", "NodeB", "DIRECT"]);
+        assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, [
+            "NodeA",
+            "NodeB",
+            PROXY_GROUPS.RESIDENTIAL,
+            "DIRECT",
+        ]);
         assert.deepEqual(group(result, PROXY_GROUPS.FINANCE)?.proxies, [
             "DIRECT",
             "NodeA",
             "NodeB",
+            PROXY_GROUPS.RESIDENTIAL,
         ]);
         // 没有低倍率组时，静态资源组保持正常顺序。
         assert.deepEqual(group(result, PROXY_GROUPS.STATIC_RESOURCES)?.proxies, [
             "NodeA",
             "NodeB",
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
     });
@@ -118,6 +131,7 @@ describe("assembleConfig", () => {
             PROXY_GROUPS.SELECT,
             "香港节点",
             "美国节点",
+            PROXY_GROUPS.RESIDENTIAL,
             PROXY_GROUPS.MANUAL,
             "DIRECT",
         ]);
@@ -127,6 +141,7 @@ describe("assembleConfig", () => {
             "香港节点",
             "美国节点",
             PROXY_GROUPS.LOW_COST,
+            PROXY_GROUPS.RESIDENTIAL,
             PROXY_GROUPS.MANUAL,
             "DIRECT",
         ]);
@@ -139,12 +154,14 @@ describe("assembleConfig", () => {
             PROXY_GROUPS.LOW_COST,
             "NodeA",
             "NodeB 0.2x 大流量",
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
         assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, [
             "NodeA",
             "NodeB 0.2x 大流量",
             PROXY_GROUPS.LOW_COST,
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
     });
@@ -174,17 +191,20 @@ describe("assembleConfig", () => {
         assert.deepEqual(group(result, PROXY_GROUPS.FRONT_PROXY)?.proxies, ["DIRECT"]);
         assert.deepEqual(group(result, PROXY_GROUPS.SELECT)?.proxies, [
             PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
         assert.deepEqual(group(result, PROXY_GROUPS.FALLBACK)?.proxies, [PROXY_GROUPS.LANDING]);
         assert.equal(group(result, PROXY_GROUPS.MANUAL), undefined);
         assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, [
             PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
         assert.deepEqual(group(result, PROXY_GROUPS.FINANCE)?.proxies, [
             "DIRECT",
             PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.RESIDENTIAL,
         ]);
     });
 
@@ -211,11 +231,17 @@ describe("assembleConfig", () => {
         const google = group(result, PROXY_GROUPS.GOOGLE);
         assert.equal(google?.["include-all"], true);
         assert.equal(google?.["exclude-filter"], "^(?:落地A)$");
-        assert.deepEqual(google?.proxies, [PROXY_GROUPS.LANDING, PROXY_GROUPS.LOW_COST, "DIRECT"]);
+        assert.deepEqual(google?.proxies, [
+            PROXY_GROUPS.LANDING,
+            PROXY_GROUPS.LOW_COST,
+            PROXY_GROUPS.RESIDENTIAL,
+            "DIRECT",
+        ]);
         assert.deepEqual(group(result, PROXY_GROUPS.FINANCE)?.proxies, [
             "DIRECT",
             PROXY_GROUPS.LANDING,
             PROXY_GROUPS.LOW_COST,
+            PROXY_GROUPS.RESIDENTIAL,
         ]);
     });
 
@@ -227,12 +253,14 @@ describe("assembleConfig", () => {
         assert.deepEqual(group(result, PROXY_GROUPS.BAHAMUT)?.proxies, [
             "台湾01",
             "台湾02",
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
         assert.deepEqual(group(result, PROXY_GROUPS.BILIBILI)?.proxies, [
             "DIRECT",
             "台湾01",
             "台湾02",
+            PROXY_GROUPS.RESIDENTIAL,
         ]);
         assert.ok(!group(result, PROXY_GROUPS.BAHAMUT)?.proxies?.includes("台湾节点"));
         assert.ok(!group(result, PROXY_GROUPS.BILIBILI)?.proxies?.includes("台湾节点"));
@@ -247,6 +275,7 @@ describe("assembleConfig", () => {
         assert.deepEqual(group(result, PROXY_GROUPS.TRUTH_SOCIAL)?.proxies, [
             "美国01",
             "美国02",
+            PROXY_GROUPS.RESIDENTIAL,
             "DIRECT",
         ]);
         assert.ok(!group(result, PROXY_GROUPS.TRUTH_SOCIAL)?.proxies?.includes("美国节点"));
@@ -313,10 +342,18 @@ describe("assembleConfig", () => {
         );
 
         assert.equal(group(result, PROXY_GROUPS.MANUAL), undefined);
-        assert.deepEqual(group(result, PROXY_GROUPS.SELECT)?.proxies, ["香港01", "DIRECT"]);
+        assert.deepEqual(group(result, PROXY_GROUPS.SELECT)?.proxies, [
+            "香港01",
+            PROXY_GROUPS.RESIDENTIAL,
+            "DIRECT",
+        ]);
         assert.deepEqual(group(result, PROXY_GROUPS.AUTO)?.proxies, ["香港01"]);
         assert.deepEqual(group(result, PROXY_GROUPS.FALLBACK)?.proxies, ["香港01"]);
-        assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, ["香港01", "DIRECT"]);
+        assert.deepEqual(group(result, PROXY_GROUPS.GOOGLE)?.proxies, [
+            "香港01",
+            PROXY_GROUPS.RESIDENTIAL,
+            "DIRECT",
+        ]);
         assert.equal(group(result, PROXY_GROUPS.TAILSCALE)?.hidden, true);
     });
 
