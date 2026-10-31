@@ -32,6 +32,7 @@ export const ICONS = {
     google: `${MINI}/Google.png`,
     microsoft: `${SELF}/Microsoft_Copilot.png`,
     xbox: `${QURE}/Xbox.png`,
+    game: `${QURE}/Game.png`,
     github: `${QURE}/GitHub.png`,
     bilibili: `${QURE}/bilibili.png`,
     bahamut: `${QURE}/Bahamut.png`,

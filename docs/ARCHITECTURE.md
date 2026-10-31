@@ -73,7 +73,9 @@ flowchart TD
 | `src/catalog/group-names.ts` | 代理组名称与命名辅助 | `PROXY_GROUPS`, `NODE_SUFFIX`, `countryGroupName()` |
 | `src/catalog/countries.ts` | 国家/地区元数据；派生匹配正则 | `countriesMeta`, `countryRegexMap`, `countryExcludeRegexMap` |
 | `src/catalog/low-cost.ts` | 低倍率节点匹配器 | `LOW_COST_NODE_MATCHER` |
-| `src/catalog/service-groups.ts` | 服务代理组的声明式目录 | `serviceGroups` |
+| `src/catalog/service-groups.ts` | 服务代理组的声明式目录（`enabled` 可按开关决定是否生成该组） | `serviceGroups` |
+| `src/catalog/pc-games.ts` | 内置 PC 游戏进程清单（供「PC 游戏」组与进程规则使用） | `PC_GAME_PROCESSES` |
+| `src/catalog/processes.ts` | `procdirect` / `procproxy` 进程名与路径的净化与规则类型判定 | `parseProcessNames()`, `processRuleType()`, `normalizeProcessPath()` |
 | `src/catalog/rule-sets.ts` | Rule Provider 注册表（强类型键） | `ruleSets`, `RuleSetKey`, `ruleSet()` |
 | `src/analysis/classify.ts` | 节点多维度分类 | `analyzeNodes()` |
 | `src/analysis/active-countries.ts` | 地区阈值过滤与权重排序 | `getActiveCountryNames()` |
@@ -101,6 +103,7 @@ flowchart TD
 
 - **声明式数据与逻辑分离**：新增/调整一个服务代理组，只需在 `catalog/service-groups.ts` 增加一条记录，无需改动组装逻辑；调整图标只需改 `catalog/icons.ts`；调整参数默认值只需改 `args/schema.ts`。
 - **进程规则置顶**：`procdirect` / `procproxy` 参数解析出的进程名或完整路径会以 `PROCESS-NAME,<名称>,<DIRECT|选择代理>` / `PROCESS-PATH,<路径>,<DIRECT|选择代理>` 插在 `GEOIP,private` 之后、广告拦截规则之前，命中即完全绕开后续域名规则；条目在 `src/catalog/processes.ts` 里净化（分隔符、字符集、长度、大小写去重），带目录分隔符的条目走 `PROCESS-PATH`（Windows 路径会被规范化成反斜杠，内核侧大小写敏感精确匹配），保证不会把逗号拼进规则行。配置固定写入 `find-process-mode: strict`，没有进程规则时内核不会查进程。
+- **PC 游戏走组而不是硬编码 DIRECT**：`catalog/pc-games.ts` 的清单在 `buildRules()` 里展开成 `PROCESS-NAME,<exe>,PC 游戏`，紧跟 `procdirect` / `procproxy` 规则之后（用户显式配置优先于内置清单）。目标是一个可切换的代理组而非 `DIRECT`，这样默认直连、需要时在面板里整组切到节点；组本身由 `service-groups.ts` 的一条记录声明，`enabled` 读 `flags.pcGameEnabled`，`pcgame=false` 时既不生成组也不生成规则，避免留下悬空引用。
 - **规则集强类型**：`rules.ts` 中所有 `RULE-SET` 引用都通过 `ruleSet(key, target)` 生成，`key` 受 `RuleSetKey` 约束，规则集改名或拼写错误会在编译期报错。
 - **字段顺序集中管理**：代理组的键插入顺序决定 YAML 输出顺序，因此各类代理组的字段顺序统一由 `domain/proxy-group.ts` 的工厂函数保证，测试中亦有断言锁定。
 - **空代理组兜底集中管理**：`selectors.ts` 只负责生成候选列表，允许出现空列表；`domain/proxy-group.ts` 的 `normalizeNodeSource()`（以及经其处理的 `buildGroupByType()`）在既无显式 `proxies` 又未启用 `include-all` 时统一补入 `DIRECT`，确保最终不会输出空组。

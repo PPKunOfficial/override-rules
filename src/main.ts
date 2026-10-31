@@ -17,6 +17,7 @@ https://github.com/powerfullz/override-rules
 - procdirect: 指定进程名或完整路径一律直连，多个用逗号或竖线分隔（如 GenshinImpact.exe|League of Legends.exe，或 D:\Games\VALORANT\VALORANT.exe）
 - procproxy: 指定进程名或完整路径一律走「选择代理」，多个用逗号或竖线分隔
 - tunexclude: TUN 下完全绕开内核的网段，支持预设 cs2 / valorant 与自定义 CIDR
+- pcgame: 把内置 PC 游戏进程清单接入「PC 游戏」组（默认 true；传 false 关闭该组与对应规则）
 
 源码位于 `src/`，入口为 `src/main.ts`。
 */

@@ -25,6 +25,7 @@ export const PROXY_GROUPS = {
     BILIBILI: "哔哩哔哩",
     BAHAMUT: "巴哈姆特",
     XBOX: "Xbox",
+    PC_GAME: "PC 游戏",
     TAILSCALE: "Tailscale",
     GITHUB: "Github",
     YOUTUBE: "Youtube",

@@ -10,4 +10,6 @@ export const ARG_DEFAULTS = {
     countryThreshold: 2,
     /** 默认使用 fake-ip 增强模式。 */
     fakeIPEnabled: true,
+    /** 默认把内置 PC 游戏进程清单接入「PC 游戏」组。 */
+    pcGameEnabled: true,
 } as const;

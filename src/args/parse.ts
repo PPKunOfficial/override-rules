@@ -43,5 +43,6 @@ export function buildFeatureFlags(args: ScriptArgs): FeatureFlags {
         directProcesses: parseProcessNames(args.procdirect),
         proxyProcesses: parseProcessNames(args.procproxy),
         tunExcludeAddresses: parseTunExclude(args.tunexclude),
+        pcGameEnabled: parseBool(args.pcgame, ARG_DEFAULTS.pcGameEnabled),
     };
 }

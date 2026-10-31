@@ -15,6 +15,7 @@
 * 动态覆写：自动识别节点国家/地区，仅生成实际存在的分组，节点名称实时枚举，配置更智能。
 * 游戏绕行：`procdirect` / `procproxy` 按进程点名直连或走代理；需要连内核都不经过时，用 `tunexclude=cs2,valorant` 把游戏的服务器网段整段排除出 TUN。
 * 按进程分流：`procdirect` / `procproxy` 参数把指定程序固定为直连或走代理，游戏、国服客户端之类不想过节点的程序可以单独拎出来；给纯文件名按进程名匹配，给完整路径则按 `PROCESS-PATH` 精确匹配同名进程。
+* PC 游戏：内置一份常见对局客户端的进程清单（CS2、DOTA2、无畏契约、英雄联盟、原神、星穹铁道、PUBG、Apex 等），命中后进入「PC 游戏」组，默认直连、可在面板一键切到节点；`pcgame=false` 可关掉整组与对应规则。
 * 家宽选择：额外生成一个「家宽节点」组，直接列出全部节点由你手动挑选，需要固定住宅 IP 时选一次即可，不依赖节点命名规律。
 
 > 本项目为本人自用，欢迎交流建议（Issue/PR）。如无特殊反馈，将优先满足个人需求与体验优化。
@@ -58,6 +59,7 @@
 *   `procdirect`：以逗号或竖线分隔的进程名或完整路径（如 `GenshinImpact.exe|League of Legends.exe`，或 `D:\Games\VALORANT\VALORANT.exe`），这些程序的流量一律直连、不经过任何节点（默认空）[^proc]
 *   `procproxy`：同样格式的进程名或完整路径，一律走「选择代理」，用于被域名规则判成直连、但你想走代理的程序（默认空）[^proc]
 *   `tunexclude`：从 TUN 路由中排除的网段，支持预设名 `cs2`（Steam SDR 中继）、`valorant`（Riot AS6507 全部前缀）与自定义 CIDR 混写，如 `tunexclude=cs2,1.2.3.0/24`（默认空）[^tunexclude]
+*   `pcgame`：把内置的 PC 游戏进程清单接入「PC 游戏」组（默认 `true`）；传 `false` 时不生成该组、也不生成对应 `PROCESS-NAME` 规则，游戏完全交回域名规则处理[^pcgame]
 
 > **向后兼容**：旧的 `loadbalance` 参数仍然可用。当 `grouptype` 未指定时，`loadbalance=true` 等价于 `grouptype=2`，`loadbalance=false` 等价于 `grouptype=1`。
 
@@ -71,6 +73,8 @@
 [^proc]: 纯文件名（`GenshinImpact.exe`）生成 `PROCESS-NAME` 规则，带目录分隔符的完整路径（`D:\Games\VALORANT\VALORANT.exe`）生成 `PROCESS-PATH` 规则——同名进程有好几个时用路径才能精确点名。路径要用内核看到的真实绝对路径（任务管理器 → 右键 → 打开文件所在位置 → 复制路径），**大小写敏感**，正斜杠会自动规范成反斜杠。进程规则依赖进程查找，本项目已在配置里固定 `find-process-mode: strict`（只在存在进程规则时才查，无进程规则时没有额外开销）。TCP 与 UDP 都查连接归属进程：实测 Windows 下游戏这类 UDP 流量同样命中（日志 `[UDP] ... (cs2.exe) --> ... match ProcessName(cs2.exe)`），所以 `procdirect=cs2.exe` 足以让游戏整体直连、不再出现「服务器在境内却绕去香港节点」的反向优化。注意 TUN 模式下这些程序的流量仍然要经过内核转发，`DIRECT` 只是不出节点；想让程序完全不碰内核只能按目的地网段排除（`tunexclude`）。
 
 [^tunexclude]: 只有 TUN 模式才有意义。被排除的网段不经过内核，是真正意义上的「绕过 Clash」，而不只是走 `DIRECT`；代价是对应服务（Steam 中继、Riot 登录/商店）也一并直连。mihomo 在 Windows 上没有按进程排除 TUN 的能力，只能按目的地网段排除；如果只是不想让游戏过节点，用 `procdirect` 更省事。网段会随游戏更新变化，可用 `node scripts/game-networks.mjs` 重新抓取。
+
+[^pcgame]: 清单只收对局本体（`cs2.exe`、`VALORANT-Win64-Shipping.exe`、`TslGame.exe`、`YuanShen.exe` 等），不收启动器与商店（`steam.exe`、`RiotClientServices.exe`、`Battle.net.exe`），也不收 `javaw.exe`、`game.exe` 这类过于通用的名字——否则更新下载、社区和别的程序会被一起按游戏处理。命中的进程进入「PC 游戏」组，该组候选以 `DIRECT` 开头，想看某个游戏走节点就在面板里把这一组切过去，不用改订阅链接。`procdirect` / `procproxy` 里显式点名的进程优先于这份内置清单。清单在 `src/catalog/pc-games.ts`，自建 fork 想加自己的游戏（比如 `DeltaForce.exe`、`Wuthering Waves.exe`）直接往里加一行即可。
 
 [^fn2]: 无特殊需求不要启用，否则会造成[移动设备异常耗电问题](https://github.com/vernesong/OpenClash/issues/2614)。
 
@@ -114,6 +118,8 @@ https://cdn.jsdelivr.net/gh/PPKunOfficial/override-rules/convert.min.js#grouptyp
 ```
 
 对局流量是 UDP，`PROCESS-NAME` 同样生效（Windows 实测日志 `[UDP] ... (cs2.exe) --> ... match ProcessName(cs2.exe)`），不需要手工填服务器网段。如果还想让流量连内核都不经过（连转发开销都不要），再用 `tunexclude` 把对应网段排除出 TUN。
+
+**默认不用配任何参数**：常见对局客户端的进程名已经内置，命中后进入「PC 游戏」组，该组默认直连。哪天想让某个游戏走节点（比如外服小号），在面板里把「PC 游戏」组切到对应节点即可；不想让它们被特殊处理就加 `pcgame=false`。清单里没有的冷门游戏，用 `procdirect=<进程名>` 点名，效果一样。
 
 ### 关于链式代理的说明
 

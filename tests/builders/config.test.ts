@@ -424,4 +424,38 @@ describe("assembleConfig", () => {
         assert.equal(result["geodata-mode"], true);
         assert.ok(result["geox-url"]?.geoip);
     });
+
+    it("默认生成「PC 游戏」组，候选以 DIRECT 开头并接入游戏进程规则", () => {
+        const result = run({}, CONFIG);
+        const pcGame = group(result, PROXY_GROUPS.PC_GAME);
+
+        assert.ok(pcGame, "缺少 PC 游戏组");
+        assert.equal(pcGame?.type, "select");
+        assert.equal(pcGame?.proxies?.[0], "DIRECT");
+        assert.ok(
+            result.rules?.includes(`PROCESS-NAME,cs2.exe,${PROXY_GROUPS.PC_GAME}`),
+            "游戏进程规则没有接入 PC 游戏组"
+        );
+        assert.equal(result["find-process-mode"], "strict");
+    });
+
+    it("pcgame=false 时既不生成「PC 游戏」组也不生成游戏进程规则", () => {
+        const result = run({ pcgame: "false" }, CONFIG);
+
+        assert.equal(group(result, PROXY_GROUPS.PC_GAME), undefined);
+        assert.ok(!result.rules?.some((rule) => rule.endsWith(`,${PROXY_GROUPS.PC_GAME}`)));
+    });
+
+    it("PC 游戏组只占一个位置，其余组不受影响", () => {
+        const withGames = (run({}, CONFIG)["proxy-groups"] ?? []).map((item) => String(item.name));
+        const withoutGames = (run({ pcgame: "false" }, CONFIG)["proxy-groups"] ?? []).map((item) =>
+            String(item.name)
+        );
+
+        assert.ok(withGames.indexOf(PROXY_GROUPS.PC_GAME) < withGames.indexOf(PROXY_GROUPS.GLOBAL));
+        assert.deepEqual(
+            withGames.filter((name) => name !== PROXY_GROUPS.PC_GAME),
+            withoutGames
+        );
+    });
 });

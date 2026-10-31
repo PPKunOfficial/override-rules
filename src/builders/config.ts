@@ -60,6 +60,7 @@ export function assembleConfig(
             hasTailscale: nodes.hasTailscale,
             directProcesses: flags.directProcesses,
             proxyProcesses: flags.proxyProcesses,
+            pcGameEnabled: flags.pcGameEnabled,
         }),
         sniffer: snifferConfig,
         dns: buildDns({

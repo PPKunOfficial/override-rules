@@ -166,6 +166,21 @@ NODE_USE_ENV_PROXY=1 HTTPS_PROXY=http://127.0.0.1:7897 node scripts/game-network
 
 > TUN 模式下「直连」只表示不走节点，数据仍然经过内核转发。要让某个程序完全不经过 Clash，只能靠目的地网段排除（`tunexclude`）或干脆不用 TUN，Clash 系客户端没有按进程绕过 TUN 的开关。
 
+## PC 游戏组
+
+内置一份常见对局客户端的进程清单（`src/catalog/pc-games.ts`），命中后进入「PC 游戏」组：
+
+```text
+# 默认就是开启的，链接里什么都不用加
+...convert.js#grouptype=1
+```
+
+*   组的候选以 `DIRECT` 开头，后面跟着常规节点候选；想让某个游戏走节点，在面板里把「PC 游戏」组切过去即可，不用改订阅链接。
+*   `pcgame=false` 关闭整组与对应的 `PROCESS-NAME` 规则，游戏回到纯域名规则处理。
+*   `procdirect` / `procproxy` 里显式点名的进程排在 PC 游戏规则之前，会覆盖内置清单的判断。
+*   清单只收对局本体，不收启动器与商店（`steam.exe`、`RiotClientServices.exe`、`Battle.net.exe`），否则更新下载与社区会被一并按游戏处理；也不收 `javaw.exe`、`game.exe`、`Client-Win64-Shipping.exe` 这类会误伤别的东西的名字。
+*   想加自己的游戏，直接往 `PC_GAME_PROCESSES` 里加一行进程名（任务管理器 → 详细信息 → 右键进程 → 属性，看映像名称）；冷门游戏也可以不改进清单，用 `procdirect=<进程名>` 一次性点名。
+
 ## 家宽节点组
 
 「家宽节点」组不做名称匹配，直接把全部节点列出来，由你在面板里手动挑选住宅线路，选一次就固定住。它的内容与「手动选择」一致；展平模式下（地区数不足阈值、不生成地区组）它依然存在，用于直接选节点。

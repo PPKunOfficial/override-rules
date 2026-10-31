@@ -17,6 +17,7 @@ export interface ScriptArgs {
     procdirect?: string;
     procproxy?: string;
     tunexclude?: string;
+    pcgame?: string;
 }
 
 /** 地区代理组类型：0=select（手动选择），1=url-test（自动测速），2=load-balance（负载均衡）。 */
@@ -39,4 +40,6 @@ export interface FeatureFlags {
     proxyProcesses: string[];
     /** 从 TUN 路由中排除的网段（游戏服务器等需要完全绕开内核的流量）。 */
     tunExcludeAddresses: string[];
+    /** 是否把内置 PC 游戏进程清单接入「PC 游戏」组。 */
+    pcGameEnabled: boolean;
 }

@@ -17,6 +17,8 @@ export interface ServiceGroupDef {
     icon: string;
     /** 是否附加 `include-all: true`。 */
     includeAll?: boolean;
+    /** 是否生成该组；省略时始终生成。 */
+    enabled?: (ctx: GroupBuildContext) => boolean;
     /** 根据构建上下文返回候选代理列表。 */
     proxies: (ctx: GroupBuildContext) => ProxyGroupCandidate[];
 }
@@ -78,6 +80,17 @@ export const serviceGroups: ServiceGroupDef[] = [
         name: PROXY_GROUPS.XBOX,
         icon: ICONS.xbox,
         proxies: (ctx) => ctx.lists.defaultProxies,
+    },
+    {
+        // 内置游戏进程清单的落点：默认直连（游戏走代理只会被反向优化），
+        // 需要时在面板里把这一组切到某个节点即可。
+        name: PROXY_GROUPS.PC_GAME,
+        icon: ICONS.game,
+        enabled: (ctx) => ctx.flags.pcGameEnabled,
+        proxies: (ctx) => [
+            "DIRECT",
+            ...ctx.lists.defaultProxies.filter((item) => item !== "DIRECT"),
+        ],
     },
     {
         name: PROXY_GROUPS.GITHUB,

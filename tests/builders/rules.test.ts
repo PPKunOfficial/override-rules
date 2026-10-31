@@ -68,6 +68,57 @@ describe("buildRules", () => {
         assert.ok(rules.includes(`PROCESS-NAME,WeChat.exe,${PROXY_GROUPS.SELECT}`));
     });
 
+    it("pcgame 开启时把内置游戏进程接入「PC 游戏」组", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            pcGameEnabled: true,
+        });
+
+        assert.ok(rules.includes(`PROCESS-NAME,cs2.exe,${PROXY_GROUPS.PC_GAME}`));
+        assert.ok(
+            rules.includes(`PROCESS-NAME,VALORANT-Win64-Shipping.exe,${PROXY_GROUPS.PC_GAME}`)
+        );
+        assert.ok(rules.includes(`PROCESS-NAME,League of Legends.exe,${PROXY_GROUPS.PC_GAME}`));
+
+        const lastGameRule = rules.findLastIndex((rule) =>
+            rule.endsWith(`,${PROXY_GROUPS.PC_GAME}`)
+        );
+        const firstRuleSet = rules.findIndex((rule) => rule.startsWith("RULE-SET,"));
+        assert.ok(lastGameRule < firstRuleSet, "游戏进程规则必须排在规则集之前");
+    });
+
+    it("pcgame 关闭时不生成游戏进程规则", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            pcGameEnabled: false,
+        });
+
+        assert.ok(!rules.some((rule) => rule.endsWith(`,${PROXY_GROUPS.PC_GAME}`)));
+    });
+
+    it("显式 procdirect / procproxy 优先于内置游戏清单", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            pcGameEnabled: true,
+            directProcesses: ["cs2.exe"],
+            proxyProcesses: ["dota2.exe"],
+        });
+
+        assert.ok(
+            rules.indexOf("PROCESS-NAME,cs2.exe,DIRECT") <
+                rules.indexOf(`PROCESS-NAME,cs2.exe,${PROXY_GROUPS.PC_GAME}`),
+            "procdirect 必须排在 PC 游戏规则之前"
+        );
+        assert.ok(
+            rules.indexOf(`PROCESS-NAME,dota2.exe,${PROXY_GROUPS.SELECT}`) <
+                rules.indexOf(`PROCESS-NAME,dota2.exe,${PROXY_GROUPS.PC_GAME}`),
+            "procproxy 必须排在 PC 游戏规则之前"
+        );
+    });
+
     it("所有引用的规则集均已注册", () => {
         const rules = buildRules({ quicEnabled: true, hasTailscale: true });
         for (const rule of rules) {

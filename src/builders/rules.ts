@@ -6,6 +6,7 @@
  */
 
 import { PROXY_GROUPS } from "../catalog/group-names";
+import { PC_GAME_PROCESSES } from "../catalog/pc-games";
 import { processRuleType } from "../catalog/processes";
 import { ruleSet } from "../catalog/rule-sets";
 import { isNotNull } from "../utils/primitives";
@@ -17,6 +18,8 @@ export interface BuildRulesInput {
     directProcesses?: string[];
     /** 一律走「选择代理」的进程名或进程路径（来自 `procproxy` 参数）。 */
     proxyProcesses?: string[];
+    /** 是否把内置 PC 游戏进程清单接入「PC 游戏」组（来自 `pcgame` 参数）。 */
+    pcGameEnabled?: boolean;
 }
 
 /**
@@ -38,12 +41,14 @@ export const GOOGLE_PLAY_CN_HOST_REGEX =
  * @param input.hasTailscale - 是否存在 Tailscale 节点（决定是否生成 Tailscale 分流规则）
  * @param input.directProcesses - 一律直连的进程名
  * @param input.proxyProcesses - 一律走「选择代理」的进程名
+ * @param input.pcGameEnabled - 是否接入内置 PC 游戏进程清单
  */
 export function buildRules({
     quicEnabled,
     hasTailscale,
     directProcesses = [],
     proxyProcesses = [],
+    pcGameEnabled = false,
 }: BuildRulesInput): string[] {
     return [
         !quicEnabled ? `AND,((DST-PORT,443),(NETWORK,UDP)),REJECT` : null,
@@ -58,6 +63,10 @@ export function buildRules({
         ...proxyProcesses.map(
             (value) => `${processRuleType(value)},${value},${PROXY_GROUPS.SELECT}`
         ),
+        // 内置 PC 游戏进程清单：显式配置的 procdirect / procproxy 优先于这份默认清单。
+        ...(pcGameEnabled
+            ? PC_GAME_PROCESSES.map((exe) => `PROCESS-NAME,${exe},${PROXY_GROUPS.PC_GAME}`)
+            : []),
         ruleSet("ADBlock", PROXY_GROUPS.AD_BLOCK),
         ruleSet("AdditionalFilter", PROXY_GROUPS.AD_BLOCK),
         ruleSet("SogouInput", PROXY_GROUPS.SOGOU_INPUT),

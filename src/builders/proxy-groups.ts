@@ -54,11 +54,11 @@ function buildFrontGroups(ctx: GroupBuildContext): Array<ProxyGroup | null> {
     ];
 }
 
-/** 由声明式目录生成的服务代理组。 */
+/** 由声明式目录生成的服务代理组（`enabled` 为假时跳过该组）。 */
 function buildServiceGroups(ctx: GroupBuildContext): ProxyGroup[] {
-    return serviceGroups.map((def) =>
-        selectGroup(def.name, def.icon, def.proxies(ctx), def.includeAll)
-    );
+    return serviceGroups
+        .filter((def) => def.enabled?.(ctx) ?? true)
+        .map((def) => selectGroup(def.name, def.icon, def.proxies(ctx), def.includeAll));
 }
 
 /** 尾部固定代理组：Tailscale、广告拦截、Final、自动选择、故障转移。 */
