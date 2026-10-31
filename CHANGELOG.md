@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.9.3](https://github.com/PPKunOfficial/override-rules/compare/src-v2.9.2...src-v2.9.3) (2026-10-31)
+
+
+### Bug Fixes
+
+- Steam 直连规则移到静态资源之前 ([6ff77a1](https://github.com/PPKunOfficial/override-rules/commit/6ff77a1da60959296e60cfee0c88b8acdc2b5dd0))
+
+
+### Documentation
+
+- 游戏直连说明（procdirect 覆盖 UDP 对局流量） ([532f64c](https://github.com/PPKunOfficial/override-rules/commit/532f64c734f2bb155df9af07a10fe1c8e27ead03))
+
+
+### Features
+
+- 新增「PC 游戏」组，内置常见游戏进程清单 ([d37c13f](https://github.com/PPKunOfficial/override-rules/commit/d37c13fb6f061d48e35fbe5532938d5f4a21a978))
+- Procdirect / procproxy 支持 PROCESS-PATH 精确点名进程 ([1207962](https://github.com/PPKunOfficial/override-rules/commit/1207962386b3a68ef5250923568cc34d8958a056))
+- Tunexclude 参数，让游戏服务器网段完全绕开 TUN ([b824b89](https://github.com/PPKunOfficial/override-rules/commit/b824b898d94e13e3f8dc73377729c251d17e9a19))
+- 支持按进程名分流（procdirect / procproxy） ([b3f7771](https://github.com/PPKunOfficial/override-rules/commit/b3f7771217456059948b49d4fa792efd4829d2b1))
+- 新增「家宽节点」手动选择组 ([3ff700a](https://github.com/PPKunOfficial/override-rules/commit/3ff700af3d171b5258866052af413c83e290e953))
 ## [2.9.2](https://github.com/PPKunOfficial/override-rules/compare/src-v2.9.1...src-v2.9.2) (2026-10-31)
 
 
