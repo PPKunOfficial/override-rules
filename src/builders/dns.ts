@@ -102,43 +102,44 @@ const DNS_POLICY_FIELDS = ["nameserver-policy", "proxy-server-nameserver-policy"
 /**
  * 国内域名的主解析上游。
  *
- * 全部走加密 DNS，避免运营商（常见的 `114.114.114.114`、光猫/路由器下发的 DNS）
- * 明文抢答与投毒：阿里 DoH 打头，腾讯 DNSPod 的 DoH/DoT 紧随其后，
- * 火山引擎的明文 UDP 仅作低延迟兜底，断网重连时也能先用上。
+ * 全部走加密 DNS，且**全部使用 IP 直连端点**：主机名要靠 `default-nameserver` 明文引导解析，
+ * 那一步会暴露查询内容（并可能被投毒），用 IP 端点就没有这个中间环节。
+ * 阿里 DoH 打头，腾讯 DNSPod 的 DoH 紧随其后，阿里 DoT 作为端口 853 上的备用通道。
  */
 const DOMESTIC_DNS_SERVERS = [
-    "https://dns.alidns.com/dns-query",
-    "https://doh.pub/dns-query",
-    "tls://dot.pub",
-    "180.184.1.1",
+    "https://223.5.5.5/dns-query",
+    "https://1.12.12.12/dns-query",
+    "tls://223.5.5.5:853",
 ];
 
 /**
  * 引导 DoH/DoT 域名解析的明文服务器。
  *
- * `dns.alidns.com`、`doh.pub` 这些主机名本身需要先被解析，
- * 否则加密上游在冷启动时会互相依赖。这里固定用 IP，不走 `system`，
- * 以免把系统/运营商下发的 DNS 重新拉回解析链路。
+ * 脚本自带的加密上游全部是 IP 端点，正常情况下用不到这里；它只在继承到主机名形式的上游 DNS
+ * （例如订阅方提供了 `https://dns.example.com/dns-query`）时充当引导解析。
+ * 固定用 IP、不走 `system`，以免把系统/运营商下发的 DNS 重新拉回解析链路。
  */
 const DOMESTIC_BOOTSTRAP_DNS = ["223.5.5.5", "119.29.29.29", "180.184.1.1"];
 
 /** 代理服务端域名专用解析上游：同样只用加密 DNS，且不经过代理自身。 */
-const PROXY_SERVER_DNS = ["https://dns.alidns.com/dns-query", "https://doh.pub/dns-query"];
+const PROXY_SERVER_DNS = ["https://223.5.5.5/dns-query", "https://1.12.12.12/dns-query"];
 
 /**
  * 海外域名的解析上游。
  *
  * 这些解析器在大陆直连基本不可达（明文与 DoH 都会被干扰），因此每条都带 `#RULES` 后缀：
- * 该服务器自身的连接按 `rules` 匹配，命中代理组时经代理访问，从而拿到未经污染的海外结果。
- * 由于要经 TCP 代理转发，这里只用 DoH/DoT，不用 DoQ（QUIC 走 UDP，无法被 HTTP/SOCKS 代理承载）；
- * 并且优先使用 IP 直连端点，避免主机名被国内引导解析劫持到 `127.0.0.1`（实测 `dns.sb` 曾被这样投毒）。
+ * 该服务器自身的连接按 `rules` 匹配，命中代理组时经代理访问，运营商只看得到隧道，
+ * 解析内容对本地链路完全不可见。由于要经 TCP 代理转发，这里只用 DoH/DoT，不用 DoQ
+ * （QUIC 走 UDP，无法被 HTTP/SOCKS 代理承载），并且只用 IP 直连端点：
+ * 主机名版端点要靠国内引导解析拿 IP，实测 `dns.sb` 就是这样被投毒到 `127.0.0.1` 的。
+ * DoH 排在最前，DoT 只作 853 端口上的备用通道。
  */
 const FOREIGN_DNS_SERVERS = [
     "https://1.1.1.1/dns-query#RULES",
     "https://8.8.8.8/dns-query#RULES",
-    "tls://dns.quad9.net#RULES",
-    "https://dns.google/dns-query#RULES",
-    "https://cloudflare-dns.com/dns-query#RULES",
+    "https://9.9.9.9/dns-query#RULES",
+    "https://1.0.0.1/dns-query#RULES",
+    "tls://1.1.1.1:853#RULES",
 ];
 
 /** 判断 DNS 上游返回的地址是否已被污染，需要走海外兜底。 */

@@ -54,7 +54,7 @@ describe("buildDns", () => {
         );
     });
 
-    it("国内上游加密优先，明文只作兜底", () => {
+    it("国内上游全部加密且不使用主机名端点", () => {
         const dns = buildDns({ fakeIPEnabled: false, ipv6Enabled: false });
 
         assert.ok(dns.nameserver[0].startsWith("https://"), "首选上游应为 DoH");
@@ -63,9 +63,16 @@ describe("buildDns", () => {
             "缺少 DoT 上游"
         );
         assert.ok(
-            dns.nameserver.slice(0, -1).every((server) => /^(https|tls):\/\//.test(server)),
-            "除最后一项兜底外，国内上游应全部加密"
+            dns.nameserver.every((server) => /^(https|tls):\/\//.test(server)),
+            "国内上游不应出现明文 DNS"
         );
+        for (const server of dns.nameserver) {
+            assert.match(
+                server,
+                /^(https|tls):\/\/[0-9.]+/,
+                `${server} 应为主机名端点以外的 IP 端点`
+            );
+        }
         assert.deepEqual(dns["default-nameserver"], ["223.5.5.5", "119.29.29.29", "180.184.1.1"]);
     });
 
@@ -75,6 +82,7 @@ describe("buildDns", () => {
 
         assert.ok(proxyDns.length > 0);
         assert.ok(proxyDns.every((server) => server.startsWith("https://")));
+        assert.ok(proxyDns.every((server) => /^https:\/\/[0-9.]+/.test(server)));
     });
 
     it("国内域名走加密上游，海外域名走海外上游", () => {
@@ -105,8 +113,13 @@ describe("buildDns", () => {
             "DoQ 走 UDP，无法被代理承载"
         );
         assert.ok(
-            dns.fallback.some((server) => /^https:\/\/[0-9.]+/.test(server)),
-            "至少应有一个 IP 直连的 DoH，避免主机名被引导解析劫持"
+            dns.fallback.every((server) => /^(https|tls):\/\/[0-9.]+/.test(server)),
+            "海外上游应全部为主机名端点以外的 IP 端点，避免引导解析投毒"
+        );
+        assert.deepEqual(
+            dns.fallback.map((server) => server.split(":")[0]),
+            ["https", "https", "https", "https", "tls"],
+            "DoH 应排在 DoT 之前"
         );
         assert.equal(dns["prefer-h3"], false);
     });

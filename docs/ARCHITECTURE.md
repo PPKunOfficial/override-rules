@@ -171,18 +171,20 @@ flowchart TD
 
 | 字段 | 内容 | 作用 |
 | --- | --- | --- |
-| `default-nameserver` | `223.5.5.5`、`119.29.29.29`、`180.184.1.1` | 仅用于引导解析 DNS 服务商自己的域名 |
-| `nameserver` | `https://dns.alidns.com/dns-query`、`https://doh.pub/dns-query`、`tls://dot.pub`、`180.184.1.1` | 默认上游（国内），加密优先，末位保留一个明文兜底 |
-| `proxy-server-nameserver` | 阿里 / 腾讯 DoH | 解析 `server` 域名，避免「解析代理域名又需要代理」的死循环 |
+| `default-nameserver` | `223.5.5.5`、`119.29.29.29`、`180.184.1.1` | 仅用于引导解析主机名形式的 DNS 服务商域名（脚本自带上游都是 IP 端点，正常用不到） |
+| `nameserver` | `https://223.5.5.5/dns-query`、`https://1.12.12.12/dns-query`、`tls://223.5.5.5:853` | 默认上游（国内），全加密、全 IP 端点 |
+| `proxy-server-nameserver` | `https://223.5.5.5/dns-query`、`https://1.12.12.12/dns-query` | 解析 `server` 域名，避免「解析代理域名又需要代理」的死循环 |
 | `nameserver-policy: geosite:cn` | 与 `nameserver` 相同 | 国内域名显式分区到国内加密上游 |
 | `nameserver-policy: geosite:geolocation-!cn` | `fallback` 中的海外上游 | 海外域名直接交给海外 DNS，不再由国内上游先答一遍 |
-| `fallback` | `https://1.1.1.1/dns-query`、`https://8.8.8.8/dns-query`、`tls://dns.quad9.net`、`https://dns.google/dns-query`、`https://cloudflare-dns.com/dns-query`，每条带 `#RULES` | 海外解析上游 |
+| `fallback` | `https://1.1.1.1/dns-query`、`https://8.8.8.8/dns-query`、`https://9.9.9.9/dns-query`、`https://1.0.0.1/dns-query`、`tls://1.1.1.1:853`，每条带 `#RULES` | 海外解析上游，DoH 在前、DoT 垫底 |
 | `fallback-filter` | `geoip: true` + `geoip-code: CN` + `ipcidr: 240.0.0.0/4, 0.0.0.0/32` | 未命中分区的域名若返回国内地址或保留地址，视为污染并强制走 `fallback` |
 | `prefer-h3` | `false` | 海外 DoH 经 TCP 代理转发，QUIC/h3（UDP）无法被 HTTP/SOCKS 代理承载 |
 
+**全链路无明文**：国内、海外两组上游都是 IP 直连端点 + DoH/DoT，`nameserver` 里不再有任何明文 UDP 项，海外那组更是连主机名都没有——运营商侧既看不到查询内容，也看不到你查的是哪个 DNS 服务商（海外那组只表现为几条到代理端的 TLS）。唯一的明文是 `default-nameserver`，它只在「继承到主机名形式的第三方 DNS」时被调用。
+
 关于 `#RULES`：这是 mihomo 的按服务器后缀，表示**该 DNS 服务器自身的连接**按 `rules` 匹配。海外解析器在大陆直连会被干扰（实测 DoH 报 `CRYPTO_ERROR 0x128`），加上 `#RULES` 后它们的连接会命中 `MATCH,漏网之鱼` 之类的代理规则、经代理建立，从而拿到未经污染的海外结果。这比全局 `respect-rules: true` 更可控——国内上游仍然直连，不受规则影响。
 
-选择上游时优先用 IP 直连端点（`1.1.1.1`、`8.8.8.8`），因为主机名要靠 `default-nameserver` 引导解析，实测 `dns.sb` 会被国内引导解析投毒到 `127.0.0.1`，因此从默认列表中移除。
+选上游时一律用 IP 直连端点：主机名端点要靠 `default-nameserver` 明文引导解析，实测 `dns.sb` 就是这样被投毒到 `127.0.0.1` 的（阿里 / 腾讯 / Cloudflare / Google / Quad9 的 IP 端点证书都带 IP SAN，`tls://223.5.5.5:853`、`tls://1.1.1.1:853` 这类 DoT 也实测可用）。
 
 默认用 `fake-ip`，被代理的域名不会以污染结果落地——本地只回 `198.18.0.0/16` 的假地址；`redir-host` 模式下则由上面的海外上游给出真实地址。
 

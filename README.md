@@ -11,7 +11,7 @@
 * 精简冗余，结构清晰，维护便捷。
 * 深度融合 [Loyalsoldier/v2ray-rules-dat](https://github.com/Loyalsoldier/v2ray-rules-dat) GeoSite/GeoIP，分流更精准。
 * IP 规则默认添加 `no-resolve`，有效减少本地 DNS 解析，提升速度与隐私。
-* DNS 国内域名走阿里 / 腾讯加密 DoH、DoT（不使用系统或运营商下发解析器），海外域名走经代理的海外加密 DNS，并带污染检测兜底与 `geosite:cn` / `geolocation-!cn` 分区解析。
+* DNS 国内域名走阿里 / 腾讯加密 DoH、DoT，海外域名走经代理的海外加密 DNS（Cloudflare / Google / Quad9）；上游全部为 IP 直连端点、无明文解析，不使用系统或运营商下发解析器，并带污染检测兜底与 `geosite:cn` / `geolocation-!cn` 分区解析。
 * 动态覆写：自动识别节点国家/地区，仅生成实际存在的分组，节点名称实时枚举，配置更智能。
 
 > 本项目为本人自用，欢迎交流建议（Issue/PR）。如无特殊反馈，将优先满足个人需求与体验优化。
