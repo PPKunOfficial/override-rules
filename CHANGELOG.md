@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.9.4](https://github.com/PPKunOfficial/override-rules/compare/src-v2.9.3...src-v2.9.4) (2026-10-31)
+
+
+### Features
+
+- 视频站点恢复「亚洲/欧美流媒体」合并分组，成人内容并入「学习资料」 ([28099aa](https://github.com/PPKunOfficial/override-rules/commit/28099aa416c0f61c47c4ab962541e56bc6562491))
 ## [2.9.3](https://github.com/PPKunOfficial/override-rules/compare/src-v2.9.2...src-v2.9.3) (2026-10-31)
 
 
