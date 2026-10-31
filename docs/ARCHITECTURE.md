@@ -80,7 +80,7 @@ flowchart TD
 | `src/domain/proxy-group.ts` | 代理组构造工厂（字段顺序与空候选兜底集中管理） | `buildGroupByType()`, `selectGroup()`, `urlTestGroup()`, `fallbackGroup()` |
 | `src/builders/selectors.ts` | 各策略组的基础候选列表 | `buildBaseLists()` |
 | `src/builders/proxy-groups.ts` | 代理组组装（前置/服务/尾部/地区/家宽选择） | `buildProxyGroups()` |
-| `src/builders/rules.ts` | 路由规则构建（含 `PROCESS-NAME` 进程分流） | `buildRules()` |
+| `src/builders/rules.ts` | 路由规则构建（含 `PROCESS-NAME` / `PROCESS-PATH` 进程分流） | `buildRules()` |
 | `src/builders/rule-set` 引用 | 规则集名称受 `RuleSetKey` 约束，改名可编译期报错 | — |
 | `src/builders/dns.ts` | DNS 配置、fake-ip 过滤与上游字段继承 | `buildDns()` |
 | `src/builders/sniffer.ts` | 域名嗅探配置 | `snifferConfig` |
@@ -100,7 +100,7 @@ flowchart TD
 ### 模块化与「改一处不影响别处」
 
 - **声明式数据与逻辑分离**：新增/调整一个服务代理组，只需在 `catalog/service-groups.ts` 增加一条记录，无需改动组装逻辑；调整图标只需改 `catalog/icons.ts`；调整参数默认值只需改 `args/schema.ts`。
-- **进程规则置顶**：`procdirect` / `procproxy` 参数解析出的进程名会以 `PROCESS-NAME,<名称>,<DIRECT|选择代理>` 插在 `GEOIP,private` 之后、广告拦截规则之前，命中即完全绕开后续域名规则；进程名在 `src/catalog/processes.ts` 里净化（分隔符、字符集、长度、大小写去重），保证不会把逗号拼进规则行。配置固定写入 `find-process-mode: strict`，没有进程规则时内核不会查进程。
+- **进程规则置顶**：`procdirect` / `procproxy` 参数解析出的进程名或完整路径会以 `PROCESS-NAME,<名称>,<DIRECT|选择代理>` / `PROCESS-PATH,<路径>,<DIRECT|选择代理>` 插在 `GEOIP,private` 之后、广告拦截规则之前，命中即完全绕开后续域名规则；条目在 `src/catalog/processes.ts` 里净化（分隔符、字符集、长度、大小写去重），带目录分隔符的条目走 `PROCESS-PATH`（Windows 路径会被规范化成反斜杠，内核侧大小写敏感精确匹配），保证不会把逗号拼进规则行。配置固定写入 `find-process-mode: strict`，没有进程规则时内核不会查进程。
 - **规则集强类型**：`rules.ts` 中所有 `RULE-SET` 引用都通过 `ruleSet(key, target)` 生成，`key` 受 `RuleSetKey` 约束，规则集改名或拼写错误会在编译期报错。
 - **字段顺序集中管理**：代理组的键插入顺序决定 YAML 输出顺序，因此各类代理组的字段顺序统一由 `domain/proxy-group.ts` 的工厂函数保证，测试中亦有断言锁定。
 - **空代理组兜底集中管理**：`selectors.ts` 只负责生成候选列表，允许出现空列表；`domain/proxy-group.ts` 的 `normalizeNodeSource()`（以及经其处理的 `buildGroupByType()`）在既无显式 `proxies` 又未启用 `include-all` 时统一补入 `DIRECT`，确保最终不会输出空组。

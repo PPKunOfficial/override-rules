@@ -6,15 +6,16 @@
  */
 
 import { PROXY_GROUPS } from "../catalog/group-names";
+import { processRuleType } from "../catalog/processes";
 import { ruleSet } from "../catalog/rule-sets";
 import { isNotNull } from "../utils/primitives";
 
 export interface BuildRulesInput {
     quicEnabled: boolean;
     hasTailscale: boolean;
-    /** 一律直连的进程名（来自 `procdirect` 参数）。 */
+    /** 一律直连的进程名或进程路径（来自 `procdirect` 参数）。 */
     directProcesses?: string[];
-    /** 一律走「选择代理」的进程名（来自 `procproxy` 参数）。 */
+    /** 一律走「选择代理」的进程名或进程路径（来自 `procproxy` 参数）。 */
     proxyProcesses?: string[];
 }
 
@@ -52,8 +53,11 @@ export function buildRules({
         `GEOIP,private,DIRECT,no-resolve`,
         // 进程规则放在最前面：一旦命中就完全绕开后续域名规则，
         // 否则广告拦截、静态资源等规则会先把这个程序的流量接走。
-        ...directProcesses.map((name) => `PROCESS-NAME,${name},DIRECT`),
-        ...proxyProcesses.map((name) => `PROCESS-NAME,${name},${PROXY_GROUPS.SELECT}`),
+        // 给路径（含目录分隔符）的条目生成 PROCESS-PATH，给进程名的生成 PROCESS-NAME。
+        ...directProcesses.map((value) => `${processRuleType(value)},${value},DIRECT`),
+        ...proxyProcesses.map(
+            (value) => `${processRuleType(value)},${value},${PROXY_GROUPS.SELECT}`
+        ),
         ruleSet("ADBlock", PROXY_GROUPS.AD_BLOCK),
         ruleSet("AdditionalFilter", PROXY_GROUPS.AD_BLOCK),
         ruleSet("SogouInput", PROXY_GROUPS.SOGOU_INPUT),

@@ -47,6 +47,17 @@ describe("buildRules", () => {
         assert.ok(firstProcess < firstRuleSet, "进程规则必须排在域名/规则集规则之前");
     });
 
+    it("procdirect 支持完整路径，生成 PROCESS-PATH 规则", () => {
+        const rules = buildRules({
+            quicEnabled: true,
+            hasTailscale: false,
+            directProcesses: ["D:/Riot Games/VALORANT/live/VALORANT.exe"],
+        });
+
+        assert.ok(rules.includes("PROCESS-PATH,D:/Riot Games/VALORANT/live/VALORANT.exe,DIRECT"));
+        assert.ok(!rules.some((rule) => rule.startsWith("PROCESS-NAME,D:/")));
+    });
+
     it("procproxy 把进程固定到选择代理", () => {
         const rules = buildRules({
             quicEnabled: true,

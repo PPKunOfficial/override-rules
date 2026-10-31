@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { buildFeatureFlags } from "../../src/args/parse";
-import { parseProcessNames } from "../../src/catalog/processes";
+import { parseProcessNames, processRuleType } from "../../src/catalog/processes";
 import { ARG_DEFAULTS } from "../../src/args/schema";
 
 describe("buildFeatureFlags", () => {
@@ -64,9 +64,21 @@ describe("parseProcessNames", () => {
         assert.deepEqual(parseProcessNames(" a.exe , A.EXE ,, "), ["a.exe"]);
     });
 
-    it("过滤含分隔符、路径与超长内容的非法项", () => {
-        assert.deepEqual(parseProcessNames("C:\Games\a.exe"), []);
+    it("过滤超长与含非法字符的项", () => {
         assert.deepEqual(parseProcessNames("bad*name.exe"), []);
+        assert.deepEqual(parseProcessNames("bad<name>.exe"), []);
         assert.deepEqual(parseProcessNames(`${"x".repeat(70)}.exe`), []);
+    });
+
+    it("完整路径保留并按 PROCESS-PATH 处理，正斜杠会规范成反斜杠", () => {
+        assert.deepEqual(parseProcessNames("C:\\Games\\a.exe"), ["C:\\Games\\a.exe"]);
+        assert.deepEqual(parseProcessNames("D:/Riot Games/VALORANT/live/VALORANT.exe"), [
+            "D:\\Riot Games\\VALORANT\\live\\VALORANT.exe",
+        ]);
+        // 非 Windows 路径原样保留
+        assert.deepEqual(parseProcessNames("/usr/bin/foo"), ["/usr/bin/foo"]);
+        assert.equal(processRuleType("C:\\Games\\a.exe"), "PROCESS-PATH");
+        assert.equal(processRuleType("D:/Games/VALORANT.exe"), "PROCESS-PATH");
+        assert.equal(processRuleType("GenshinImpact.exe"), "PROCESS-NAME");
     });
 });
